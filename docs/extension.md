@@ -1,6 +1,6 @@
 # The browser extension
 
-Parla for Chrome, Edge and Firefox (128+) cleans the microphone in every web calling app — Google Meet, Microsoft
+Parla for Chrome, Edge and Firefox (140+) cleans the microphone in every web calling app — Google Meet, Microsoft
 Teams, Zoom (web), Discord, Slack and any other site that uses the microphone — without changes to the app.
 
 ## Install

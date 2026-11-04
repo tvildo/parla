@@ -73,6 +73,6 @@ analytics. The only network requests are for its own files (engine and model), w
 
 ## Browser support
 
-Tested on desktop: current Chrome / Edge and Firefox 158 (the extension needs Chromium 116+ or Firefox 128+). Needed: WebAssembly and AudioWorklet;
+Tested on desktop: current Chrome / Edge and Firefox 158 (the extension needs Chromium 116+ or Firefox 140+). Needed: WebAssembly and AudioWorklet;
 the engine falls back to a build without SIMD where SIMD is missing. Safari and mobile browsers should work (they
 have both) but are not tested yet; the best model needs a recent phone.

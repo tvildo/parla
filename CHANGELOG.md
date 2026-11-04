@@ -21,7 +21,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Website: landing page, privacy page, and a live demo that cleans your own microphone in the page (quality levels,
   on/off, live listening with headphones, an 8-second A/B recording).
 - `Dockerfile`: the website as a container (nginx on :8080).
-- Firefox version of the extension (Firefox 128+): `python build.py extension --browser firefox`.
+- Firefox version of the extension (Firefox 140+): `python build.py extension --browser firefox`.
 - 21 languages for the website and the extension: English, 简体中文, 繁體中文, हिन्दी, Español, Français, العربية (RTL), বাংলা,
   Português (Brasil), Русский, اردو (RTL), Bahasa Indonesia, Deutsch, 日本語, मराठी, తెలుగు, Türkçe, தமிழ், Tiếng Việt, 한국어,
   ქართული. The site has a page per language and offers your browser's language; the extension follows the browser and
@@ -73,6 +73,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The extension no longer asks for the `identity` permission.
 
 ### Fixed
+- Firefox Add-ons warned "Manifest key not supported by the specified minimum Firefox version"
+  (`data_collection_permissions`): the Firefox build now needs Firefox 140 (ESR) or Firefox for Android 142.
 - The Chrome Web Store refused the extension zip ("More than one manifest file was found in the package"): the
   model packages' manifest.json ship as model.json inside the extension, and the build fails if a second
   manifest.json ever appears.

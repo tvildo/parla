@@ -2,7 +2,7 @@
 //
 //   node src/extension/build.ts [--out build/extension] [--wasm build/wasm] [--models deepfilternet3,gtcrn,rnnoise]
 //                            [--zip]   (also writes build/extension.zip for the stores)
-//                            [--browser firefox]   (-> build/extension-firefox: Firefox 128+ manifest)
+//                            [--browser firefox]   (-> build/extension-firefox: Firefox 140+ manifest)
 //                            [--version X.Y.Z]   (the release version in the built manifest; CI passes the next tag)
 //
 // Contents: src/extension/src/* (pages, styles, manifest; the scripts as emitted JavaScript from build/js/, so run
@@ -80,7 +80,11 @@ if (BROWSER === 'firefox') {
   delete m.minimum_chrome_version;
   delete m.storage;   // managed_schema is Chrome's; Firefox reads policies from its own policies.json / managed storage manifest
   for (const w of m.web_accessible_resources) delete w.use_dynamic_url;
-  m.browser_specific_settings = { gecko: { id: 'parla@parla.cc', strict_min_version: '128.0', data_collection_permissions: { required: ['none'], optional: ['technicalAndInteraction', 'browsingActivity'] } } };
+  // 140 (ESR) / Android 142: the first versions that know data_collection_permissions (MAIN-world scripts need 128)
+  m.browser_specific_settings = {
+    gecko: { id: 'parla@parla.cc', strict_min_version: '140.0', data_collection_permissions: { required: ['none'], optional: ['technicalAndInteraction', 'browsingActivity'] } },
+    gecko_android: { strict_min_version: '142.0' },
+  };
   m.developer = { name: 'tvildo', url: 'https://github.com/tvildo' };
   fs.writeFileSync(mf, JSON.stringify(m, null, 2) + '\n');
 }

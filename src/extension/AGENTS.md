@@ -36,15 +36,16 @@ WebAssembly.
 
 ```
 python build.py wasm && python build.py extension [--zip]   # -> build/extension/ (10.2 MB with 3 models)
-python build.py extension --browser firefox [--zip]          # -> build/extension-firefox/ (Firefox 128+)
+python build.py extension --browser firefox [--zip]          # -> build/extension-firefox/ (Firefox 140+)
 python build.py test                                         # browser tests in Docker (tests/extension.spec.ts)
 cd tests && node firefox.ts [--headless]                    # the Firefox build in this machine's Firefox (Selenium); `python build.py test` runs it in Docker too (Firefox 158, PulseAudio null sink)
 ```
 
 **Firefox**: one source tree; `build.ts --browser firefox` rewrites the manifest: `background.scripts` (Firefox MV3
 has no background service worker; the same module runs as an event page), `browser_specific_settings.gecko` (id
-`parla@parla.cc`, min 128: MAIN-world content scripts and `scripting.executeScript({world})`; `data_collection_permissions:
-none`), `developer`, no `minimum_chrome_version` / `use_dynamic_url`. `web-ext lint`: 0 errors / warnings. Firefox 158
+`parla@parla.cc`, min 140 / `gecko_android` min 142: the first versions with `data_collection_permissions` (AMO warns
+on anything lower; MAIN-world content scripts and `scripting.executeScript({world})` alone would need 128);
+`data_collection_permissions: none`), `developer`, no `minimum_chrome_version` / `use_dynamic_url`. `web-ext lint`: 0 errors / warnings. Firefox 158
 (2026-10-27, `tests/firefox.ts`): page mode, fake-mic tone 0.0707 -> 0.000045 RMS (-64 dB). Load it by hand:
 about:debugging -> This Firefox -> Load Temporary Add-on -> `build/extension-firefox/manifest.json` (gone after a
 restart until it is signed on addons.mozilla.org). Not yet checked in Firefox: isolated mode (strict-CSP sites).

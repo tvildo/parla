@@ -32,7 +32,7 @@ and these files:
 | File | What |
 |---|---|
 | `parla-chrome-vX.Y.Z.zip` | the extension for Chrome and Edge (load it unpacked, or the store's package) |
-| `parla-firefox-vX.Y.Z.zip` | the extension for Firefox 128+ |
+| `parla-firefox-vX.Y.Z.zip` | the extension for Firefox 140+ |
 | `tvildo-parla-X.Y.Z.tgz` | the npm package (`npm install ./tvildo-parla-X.Y.Z.tgz`) |
 | `parla-sdk-vX.Y.Z.zip` | the SDK as plain files for apps without npm (all three quality levels) |
 
