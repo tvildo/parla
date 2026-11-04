@@ -1,6 +1,5 @@
 // Shared helpers: the fake microphone (a generated WAV: no recording of anyone) and level measurement.
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,7 +8,10 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 /** A 12 s, 48 kHz mono WAV of steady noise + a 120 Hz hum + a 1 kHz whistle: everything in it is noise to a
  *  speech model, so with suppression on the output is far quieter than the input, off it is the input. */
 export function fakeMic(): string {
-  const file = path.join(os.tmpdir(), 'parla-fake-mic.wav');
+  // under build/ (ours), not the shared temp folder: another user can't plant or swap the file there
+  const dir = path.join(ROOT, 'build', 'test-media');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, 'fake-mic.wav');
   if (fs.existsSync(file)) return file;
   const rate = 48000, n = rate * 12;
   const pcm = Buffer.alloc(n * 2);

@@ -98,6 +98,7 @@ let bytes = 0;
 (function walk(d) { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else bytes += fs.statSync(p).size; } })(OUT);
 console.log(`@tvildo/parla ${version} -> ${OUT} (${(bytes / 1e6).toFixed(1)} MB, ${files.length} engine/model files)`);
 if (args.includes('--pack')) {
-  const out = execSync(`npm pack --pack-destination "${path.dirname(OUT)}"`, { cwd: OUT, encoding: 'utf8' }).trim().split('\n').pop() ?? '';
+  // constant arguments only (no path in the command string): the .tgz goes next to OUT
+  const out = execSync('npm pack --pack-destination ..', { cwd: OUT, encoding: 'utf8' }).trim().split('\n').pop() ?? '';
   console.log(`pack -> ${path.join(path.dirname(OUT), out)}`);
 }

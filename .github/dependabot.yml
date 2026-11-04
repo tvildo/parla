@@ -6,6 +6,7 @@ updates:
     directory: /
     target-branch: development
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }   # a release must be a week old: most malicious versions are caught by then
     groups:
       actions: { patterns: ["*"] }
 
@@ -15,6 +16,7 @@ updates:
     directories: [/, /tests, /tools/release]
     target-branch: development
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }   # a release must be a week old: most malicious versions are caught by then
     open-pull-requests-limit: 5
     groups:
       minor-and-patch: { update-types: [minor, patch] }
@@ -23,6 +25,7 @@ updates:
     directories: [/, /tests]
     target-branch: development
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }   # a release must be a week old: most malicious versions are caught by then
     ignore:
       # a new Rust or Node major goes everywhere at once (rust-toolchain.toml, the workflow, the images) and is
       # checked against the golden outputs: a deliberate upgrade, not a pull request per image

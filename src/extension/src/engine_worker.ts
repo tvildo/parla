@@ -8,6 +8,7 @@ type Processor = { port: { onmessage: ((e: { data: unknown }) => void) | null };
 const scope = self as unknown as { currentFrame: number; sampleRate: number; registerProcessor: unknown; AudioWorkletProcessor: unknown };
 const registry: Record<string, new () => Processor> = {};
 let ctl: MessagePort | null = null;
+let started = false;
 scope.currentFrame = 0;
 scope.sampleRate = 48000;
 scope.registerProcessor = (name: string, cls: new () => Processor) => { registry[name] = cls; };
@@ -23,8 +24,11 @@ scope.AudioWorkletProcessor = class {
 };
 importScripts('engine/worklet.bundle.js');
 
+// A dedicated worker: only the extension's engine frame that created it can post here (no origin to check). It takes
+// exactly one 'start' (the two ports); anything else, or a second start, is ignored.
 self.onmessage = (e: MessageEvent) => {
-  if (!e.data || e.data.type !== 'start') return;
+  if (started || !e.data || e.data.type !== 'start' || e.ports.length !== 2) return;
+  started = true;
   const [ctlPort, audioPort] = e.ports;
   ctl = ctlPort;
   scope.sampleRate = e.data.sampleRate || 48000;
