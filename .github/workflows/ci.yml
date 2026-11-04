@@ -3,7 +3,8 @@
 #   - a push (merge) to `master`: the next semantic version from the commits since the last tag (feat -> minor,
 #     fix / other -> patch, `!` or BREAKING CHANGE -> major), stamped into every build, then a GitHub release
 #     `vX.Y.Z` (the tag) with the files to download, and the extension to the Chrome Web Store and Firefox Add-ons,
-#     the package to npm, the report receiver to Cloudflare (each skipped while its secrets are missing)
+#     the package to npm, the report receiver to Cloudflare (each skipped while its secrets are missing), and the
+#     website to GitHub Pages (parla.cc)
 # Supply chain: actions pinned by commit SHA, exact Node / Rust / binaryen versions (binaryen checked by SHA-256),
 # npm installs only from lockfiles with install scripts off (.npmrc) and registry signatures verified, the release
 # tools from tools/release/package-lock.json, no token left in .git (persist-credentials: false). Dependabot keeps
@@ -123,6 +124,12 @@ jobs:
           sleep 2
           curl -fsS -o /dev/null http://127.0.0.1:8080/ && curl -fsS -o /dev/null http://127.0.0.1:8080/demo/
           docker rm -f parla-site
+
+      - name: Website for GitHub Pages (releases only)
+        if: needs.version.outputs.release == 'true'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: build/site
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -250,3 +257,17 @@ jobs:
           npm ci --no-audit --no-fund && npm audit signatures
           node src/telemetry/worker.test.ts
           python3 build.py telemetry-deploy --sample "$SAMPLE" --daily-limit "$DAILY_LIMIT"
+
+  pages:
+    needs: [version, release]
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Website to GitHub Pages (parla.cc)
+        id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

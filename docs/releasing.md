@@ -5,7 +5,7 @@ Two branches:
 | Branch | What happens on a push (the workflow [.github/workflows/ci.yml](../.github/workflows/ci.yml)) |
 |---|---|
 | `development` | Everyday work. Everything is built and tested (type-check, engine, extension for Chrome and Firefox, npm package, SDK files, browser tests, and the website image, started and checked). The files are attached to the run as the `parla` artifact. Nothing is tagged or published. Pull requests get the same. |
-| `master` | Releases. A merge into `master` builds and tests the same way, then creates the next version tag, a GitHub release with the files to download, publishes the extension to the Chrome Web Store and Firefox Add-ons and the package to npm, and deploys the report receiver to Cloudflare. |
+| `master` | Releases. A merge into `master` builds and tests the same way, then creates the next version tag, a GitHub release with the files to download, publishes the extension to the Chrome Web Store and Firefox Add-ons and the package to npm, deploys the report receiver to Cloudflare, and the website to GitHub Pages (parla.cc). |
 
 ## The version
 
@@ -112,6 +112,21 @@ updated, update `@playwright/test` in `tests/package.json` to the same version.
   contributors (Node 24+, for running TypeScript directly) is separate.
 
 To look up a digest: `docker buildx imagetools inspect <image>:<tag>`.
+
+## Security checks
+
+[.github/workflows/security.yml](../.github/workflows/security.yml) runs on every push and pull request, and weekly:
+
+| Check | What |
+|---|---|
+| CodeQL (SAST) | the TypeScript / JavaScript, the Rust engine and the workflows (`security-extended` queries) |
+| zizmor (SAST) | the GitHub workflows: injection, over-broad permissions, unpinned actions, credential leaks |
+| Dependency review | pull requests that add a package with a known vulnerability (moderate or worse) fail |
+| OWASP ZAP baseline (DAST) | the website image, started in CI: headers, cookies, information leaks; the report is the run's `zap-report` artifact |
+
+Findings appear in the repository's *Security → Code scanning*. GitHub's secret scanning with push protection refuses
+pushes that contain a credential, and Dependabot alerts cover every lockfile (including `src/site` and `examples/`,
+which Dependabot doesn't update automatically: they use the locally built package).
 
 ## Building a release locally
 

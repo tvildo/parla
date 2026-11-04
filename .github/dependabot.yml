@@ -10,8 +10,9 @@ updates:
       actions: { patterns: ["*"] }
 
   - package-ecosystem: npm
-    # not examples/: they depend on the locally built package (file:../../build/...), which Dependabot cannot fetch
-    directories: [/, /tests, /src/site, /tools/release]
+    # not examples/ or src/site: they depend on the locally built package (file:../../build/...), which Dependabot
+    # cannot fetch (it aborts the whole job); their lockfiles are still covered by Dependabot security alerts
+    directories: [/, /tests, /tools/release]
     target-branch: development
     schedule: { interval: weekly }
     open-pull-requests-limit: 5
