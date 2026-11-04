@@ -8,7 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tvildo/parla": "file:../../build/tvildo-parla-0.1.0.tgz",
+    "@tvildo/parla": "file:../../build/tvildo-parla.tgz",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

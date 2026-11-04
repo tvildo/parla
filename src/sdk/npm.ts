@@ -101,4 +101,6 @@ if (args.includes('--pack')) {
   // constant arguments only (no path in the command string): the .tgz goes next to OUT
   const out = execSync('npm pack --pack-destination ..', { cwd: OUT, encoding: 'utf8' }).trim().split('\n').pop() ?? '';
   console.log(`pack -> ${path.join(path.dirname(OUT), out)}`);
+  // the same file under a fixed name: examples/ install it whatever the version (a release stamps a new one)
+  fs.copyFileSync(path.join(path.dirname(OUT), out), path.join(path.dirname(OUT), 'tvildo-parla.tgz'));
 }
