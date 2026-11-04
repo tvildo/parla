@@ -85,3 +85,7 @@ Playwright's bundled Chromium (branded Chrome ignores `--load-extension` since v
 Real-site verification by hand (Meet, Teams, Zoom web; in Firefox too), a virtual "Parla" entry in the device list,
 Firefox isolated mode check, store listings (Chrome Web Store, addons.mozilla.org: AMO reviews the engine source; it is
 public) + privacy disclosure (nothing collected).
+
+**Model manifests in the package**: `models/<name>/manifest.json` ships as `models/<name>/model.json` (the Chrome Web
+Store rejects a zip with more than one `manifest.json`, 2026-11-05); `inject.ts` fetches `model.json`; `build.ts` fails
+the build if the package holds anything but exactly one `manifest.json`.

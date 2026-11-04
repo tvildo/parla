@@ -171,7 +171,8 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
   function modelPackage(name: string): Promise<Package> {
     if (!packages.has(name)) {
       packages.set(name, (async () => {
-        const m: Manifest = JSON.parse(await rpc('fetch', { path: `models/${name}/manifest.json`, as: 'text' }));
+        // the model package's manifest, shipped as model.json (the store allows one manifest.json per extension)
+        const m: Manifest = JSON.parse(await rpc('fetch', { path: `models/${name}/model.json`, as: 'text' }));
         const graph = m.graph ? JSON.parse(await rpc('fetch', { path: `models/${name}/${m.graph}`, as: 'text' })) : null;
         const config: Record<string, unknown> = { ...(m.config || {}) };
         if (graph) { config.pipeline = m.pipeline; config.graph = graph; }

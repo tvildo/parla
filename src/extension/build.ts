@@ -118,7 +118,10 @@ const shipped: { name: string; display_name: string; sample_rate: number | null;
 for (const m of MODELS) {
   const src = path.join(REPO, 'models', m);
   const man = JSON.parse(fs.readFileSync(path.join(src, 'manifest.json'), 'utf8'));
-  copyDir(src, path.join(OUT, 'models', m), (n) => !n.endsWith('.md'));
+  // the package's manifest.json ships as model.json: the Chrome Web Store refuses a zip with more than one
+  // manifest.json (the extension's own is the only one allowed); inject.ts reads models/<name>/model.json
+  copyDir(src, path.join(OUT, 'models', m), (n) => !n.endsWith('.md') && n !== 'manifest.json');
+  fs.copyFileSync(path.join(src, 'manifest.json'), path.join(OUT, 'models', m, 'model.json'));
   shipped.push({ name: m, display_name: man.display_name || m, sample_rate: man.sample_rate || man.pipeline?.sample_rate || null, engine: man.engine });
 }
 fs.writeFileSync(path.join(OUT, 'models', 'index.json'), JSON.stringify({ models: shipped }, null, 1));
@@ -127,7 +130,10 @@ fs.copyFileSync(path.join(REPO, 'LICENSE'), path.join(OUT, 'LICENSE'));
 fs.writeFileSync(path.join(OUT, 'NOTICE'), notices(REPO, MODELS));
 
 let bytes = 0;
-(function walk(d: string) { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else bytes += fs.statSync(p).size; } })(OUT);
+const manifests: string[] = [];
+(function walk(d: string) { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else { bytes += fs.statSync(p).size; if (e.name === 'manifest.json') manifests.push(path.relative(OUT, p)); } } })(OUT);
+// the Chrome Web Store rejects a package with more than one manifest.json anywhere in it
+if (manifests.length !== 1) throw new Error(`exactly one manifest.json allowed in the extension, found: ${manifests.join(', ')}`);
 console.log(`extension -> ${OUT} (${(bytes / 1e6).toFixed(1)} MB; models: ${MODELS.join(', ')})`);
 
 if (args.includes('--zip')) {

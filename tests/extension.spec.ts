@@ -511,7 +511,7 @@ test('a hostile page that takes over the bridge: only engine files, no fake sett
       other: await ask({ id: 9001, type: 'fetch', path: 'http://127.0.0.1:1/x', as: 'text' }),
       up: await ask({ id: 9002, type: 'fetch', path: 'engine/../background.js', as: 'text' }),
       own: await ask({ id: 9003, type: 'fetch', path: 'background.js', as: 'text' }),
-      engine: await ask({ id: 9004, type: 'fetch', path: 'models/gtcrn/manifest.json', as: 'text' }),
+      engine: await ask({ id: 9004, type: 'fetch', path: 'models/gtcrn/model.json', as: 'text' }),
     };
     // the call ends first (its own status updates would replace the junk below)
     (window as any).__track.stop();

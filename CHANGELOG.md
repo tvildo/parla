@@ -73,6 +73,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The extension no longer asks for the `identity` permission.
 
 ### Fixed
+- The Chrome Web Store refused the extension zip ("More than one manifest file was found in the package"): the
+  model packages' manifest.json ship as model.json inside the extension, and the build fails if a second
+  manifest.json ever appears.
 - Extension settings: a second quick click on a switch could be undone by the refresh after the first one.
 - `build.py examples` failed after the SDK was rebuilt with the same version (npm checksum of the packed file).
 - Extension settings, Privacy: a "Turn on detailed diagnostics?" box with Turn on / Cancel was always shown and its
