@@ -7,7 +7,7 @@
 Parla removes background noise and other people's voices from your microphone — in Google Meet, Microsoft Teams,
 Zoom, Discord and any other website you call from. The AI runs on your own computer: your voice never leaves it.
 
-**[Try it in your browser](https://parla.cc/demo/)** · **[Install](#install)** · **[For developers](#for-developers)** · **[Docs](docs/README.md)**
+**[🌐 parla.cc](https://parla.cc)** · **[Try it in your browser](https://parla.cc/demo/)** · **[Install](#install)** · **[For developers](#for-developers)** · **[Docs](docs/README.md)**
 
 Free · Open source · No account · No sign-up
 
