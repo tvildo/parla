@@ -10,7 +10,8 @@ updates:
       actions: { patterns: ["*"] }
 
   - package-ecosystem: npm
-    directories: [/, /tests, /src/site, /tools/release, /examples/react-vite]
+    # not examples/: they depend on the locally built package (file:../../build/...), which Dependabot cannot fetch
+    directories: [/, /tests, /src/site, /tools/release]
     target-branch: development
     schedule: { interval: weekly }
     open-pull-requests-limit: 5
