@@ -1,0 +1,90 @@
+{
+ "display_name": "DeepFilterNet3 (48 kHz, ERB gains + deep filtering)",
+ "license": "MIT OR Apache-2.0, used under MIT (Copyright (c) 2021 Hendrik Schröter; LICENSE)",
+ "source": "https://github.com/Rikorose/DeepFilterNet/blob/d375b2d8309e0935d165700c91da9de862a99c31/models/DeepFilterNet3_onnx.tar.gz",
+ "version": "git d375b2d8309e0935d165700c91da9de862a99c31 (2024-10-17), models/DeepFilterNet3_onnx.tar.gz (enc/erb_dec/df_dec ONNX + config.ini, exported 2023-05-23)",
+ "upstream_sha256": {
+  "models_DeepFilterNet3_onnx.tar.gz": "c94d91f70911001c946e0fabb4aa9adc37045f45a03b56008cb0c8244cb63616"
+ },
+ "paper": "Schroeter, Maier, Escalante-B., Rosenkranz, DeepFilterNet: Perceptually Motivated Real-Time Speech Enhancement, Interspeech 2023",
+ "published_metrics": "VoiceBank-DEMAND test: PESQ 3.17, CSIG 4.34, CBAK 3.61, COVL 3.77, STOI 0.944 (README table, DeepFilterNet3)",
+ "local_only": false,
+ "sample_rate": 48000,
+ "frame_size": 480,
+ "latency": 1440,
+ "notes": "Custom-DSP plugin `dfn` (rust/vi_dfn): Vorbis-window STFT 960/480 (analysis norm 1/960), ERB features (32 bands, 10 log10 band power, exponential mean norm, /40), complex features on 96 bins (exponential unit norm), ERB gains applied to the frame 2 hops back (conv lookahead), order-5 deep filtering over noisy frames t-4..t for bins < 96, LSNR stage gating available but disabled by config (thresholds +-1000 dB: gains + DF on every frame, as the paper model), OLA. Graph = 3 ONNX stages streamed (time caches + GRU states) by tools/make_dfn.py.",
+ "config": {
+  "sr": 48000,
+  "fft_size": 960,
+  "hop_size": 480,
+  "nb_erb": 32,
+  "nb_df": 96,
+  "df_order": 5,
+  "df_lookahead": 2,
+  "conv_lookahead": 2,
+  "erb_widths": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   5,
+   5,
+   7,
+   7,
+   8,
+   10,
+   12,
+   13,
+   15,
+   18,
+   20,
+   24,
+   28,
+   31,
+   37,
+   42,
+   50,
+   56,
+   67
+  ],
+  "norm_alpha": 0.99,
+  "mean_norm_init": [
+   -60.0,
+   -90.0
+  ],
+  "unit_norm_init": [
+   0.001,
+   0.0001
+  ],
+  "min_db_thresh": -1000.0,
+  "max_db_erb_thresh": 1000.0,
+  "max_db_df_thresh": 1000.0,
+  "inputs": [
+   "feat_erb",
+   "feat_spec"
+  ],
+  "outputs": {
+   "gains": "m",
+   "coefs": "coefs",
+   "lsnr": "lsnr"
+  }
+ },
+ "name": "deepfilternet3",
+ "engine": "dfn",
+ "graph": "graph.json",
+ "weights": "weights.bin",
+ "sha256": {
+  "graph.json": "408a742410d1c86745293b0ca5bde9d5de2b337ca6f163fe29a49b73c31af457",
+  "weights.bin": "5d6415509d7afadb168787121a260398cf8e818e14211bfe82311c2934b10b00"
+ },
+ "package_bytes": 8570861
+}

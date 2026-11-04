@@ -1,0 +1,27 @@
+# allow-list: only what the image build reads
+*
+!build.py
+!LICENSE
+!NOTICE
+!src/engine/Cargo.toml
+!src/engine/Cargo.lock
+!src/engine/vi_*/
+!src/engine/js/
+!package.json
+!package-lock.json
+!tsconfig.json
+!tools/worklet_bundle.ts
+!tools/i18n_check.ts
+!tools/ts_emit.ts
+!src/types/
+!src/extension/src/
+!src/telemetry/
+!src/i18n/
+!models/
+!src/sdk/
+!src/site/
+**/target/
+**/target_*/
+**/node_modules/
+**/dist/
+**/.astro/

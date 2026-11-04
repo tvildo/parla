@@ -1,0 +1,13 @@
+---
+import Base from "../layouts/Base.astro";
+import Demo from "../components/Demo";
+import "../styles/demo.css";
+import { pick, translator } from "../i18n";
+
+interface Props { lang: string }
+const { lang } = Astro.props;
+const t = translator(lang);
+---
+<Base lang={lang} page="demo/" title={t("demo.title")} description={t("demo.description")}>
+  <Demo client:only="react" strings={pick(lang, "demo.")} />
+</Base>

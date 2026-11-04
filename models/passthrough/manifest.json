@@ -1,0 +1,12 @@
+{
+  "name": "passthrough",
+  "display_name": "Passthrough (no processing, latency/overhead baseline)",
+  "engine": "passthrough",
+  "weights": null,
+  "sample_rate": 24000,
+  "frame_size": 40,
+  "latency": 0,
+  "local_only": false,
+  "license": "n/a",
+  "config": {"sample_rate": 24000, "frame_size": 40}
+}

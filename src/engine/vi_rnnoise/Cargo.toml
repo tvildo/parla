@@ -1,0 +1,10 @@
+[package]
+name = "vi_rnnoise"
+version = "0.1.0"
+edition = "2021"
+description = "Plugin `rnnoise`: RNNoise v0.1 (our implementation of the published algorithm; custom band/pitch DSP + GRU net)"
+
+[dependencies]
+vi_engine = { path = "../vi_engine" }
+vi_audio = { path = "../vi_audio" }
+vi_kernels = { path = "../vi_kernels" }

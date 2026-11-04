@@ -1,0 +1,44 @@
+{
+ "display_name": "GTCRN (16 kHz, 48k params, streaming)",
+ "license": "MIT (Copyright (c) 2024 Rong Xiaobin)",
+ "source": "https://github.com/Xiaobin-Rong/gtcrn/blob/502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73/stream/onnx_models/gtcrn_simple.onnx",
+ "version": "git 502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73 (2026-08-03), stream/onnx_models/gtcrn_simple.onnx = DNS3-trained model (stream/gtcrn_stream.py loads model_trained_on_dns3.tar)",
+ "upstream_sha256": {
+  "gtcrn_simple.onnx": "b4718df6228e7bdf1a8a435cf98f838636eb2fd331acabf86ba87c5192ebcb87"
+ },
+ "paper": "Rong et al., GTCRN: A Speech Enhancement Model Requiring Ultralow Computational Resources, ICASSP 2024",
+ "published_metrics": "VCTK-DEMAND (VCTK-trained checkpoint): PESQ 2.87, STOI 0.940, SI-SNR 18.83 dB; DNS3 blind: DNSMOS OVRL 2.70 (per README/paper)",
+ "local_only": false,
+ "sample_rate": 16000,
+ "frame_size": 256,
+ "latency": 256,
+ "notes": "STFT n_fft 512 / hop 256, sqrt-periodic-Hann analysis + synthesis (torch.stft/istft in stream/gtcrn_stream.py, center=True -> our streaming framing is the same up to the first frame). Graph input = complex spectrum frame [1,257,1,2], output = enhanced complex spectrum. Caches: conv_cache [2,1,16,16,33], tra_cache [2,3,1,1,16], inter_cache [2,1,33,16].",
+ "pipeline": {
+  "sample_rate": 16000,
+  "hop": 256,
+  "frames_per_call": 1,
+  "input": "mix",
+  "output": "enh",
+  "graph_latency": 0,
+  "front": {
+   "type": "stft",
+   "n_fft": 512,
+   "window": "sqrt_hann",
+   "feature": "complex"
+  },
+  "back": {
+   "type": "istft",
+   "source": "complex_spectrum",
+   "window": "sqrt_hann"
+  }
+ },
+ "name": "gtcrn",
+ "engine": "graph",
+ "graph": "graph.json",
+ "weights": "weights.bin",
+ "sha256": {
+  "graph.json": "970677fb84a2a0cebee86e3295491a4f79c96f434150cc77f27c7ee6d4b5dc35",
+  "weights.bin": "faff99b19dff08b4556dfa6a6ae4cc7292ee916a53386c45c657f17b4e68d84b"
+ },
+ "package_bytes": 393589
+}

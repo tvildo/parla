@@ -1,0 +1,12 @@
+# build outputs
+/build/
+target/
+target_*/
+node_modules/
+*.wasm
+__pycache__/
+tests/test-results/
+tests/playwright-report/
+src/site/.astro/
+src/site/dist/
+examples/*/dist/

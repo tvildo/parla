@@ -1,0 +1,36 @@
+Parla
+Copyright 2026 The Parla authors
+
+This product is licensed under the Apache License, Version 2.0 (LICENSE). It includes model weights
+published by others under their own licences. The weights are used as data only: the inference code,
+signal processing (STFT, ERB features, deep filtering, RNNoise features) and converters are this
+project's own implementations.
+
+Each package carries its upstream licence text (models/<name>/LICENSE); every build that ships a package ships it
+too (the extension, the npm package, the website's licenses.txt).
+
+models/deepfilternet3
+  DeepFilterNet3, Copyright (c) 2021 Hendrik Schröter. MIT OR Apache-2.0; used under MIT (LICENSE).
+  https://github.com/Rikorose/DeepFilterNet (d375b2d8309e0935d165700c91da9de862a99c31)
+
+models/dtln
+  DTLN, Copyright (c) 2020 Nils L. Westhausen. MIT.
+  https://github.com/breizhn/DTLN (1de1f15a8b5b7e1c44905618ff2ef70ca8277fbc)
+
+models/gtcrn
+  GTCRN, Copyright (c) 2024 Rong Xiaobin. MIT.
+  https://github.com/Xiaobin-Rong/gtcrn (502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73)
+
+models/nsnet2
+  NSNet2 (20 ms baseline), Microsoft DNS Challenge, licensed under CC BY 4.0
+  (https://creativecommons.org/licenses/by/4.0/; LICENSE). Changed: the ONNX file converted into this project's
+  graph format (graph.json + weights.bin, tools/make_nsnet2.py).
+  https://github.com/microsoft/DNS-Challenge (a2c7487e12d06d709aeebe5659c21bbf6e1a47aa)
+
+models/rnnoise
+  RNNoise, Copyright (c) 2017 Mozilla, (c) 2007-2017 Jean-Marc Valin, (c) 2005-2017 Xiph.Org Foundation,
+  (c) 2003-2004 Mark Borgerding. BSD-3-Clause (LICENSE).
+  https://github.com/xiph/rnnoise (v0.1.1, 6cbfd53eb348a8d394e0757b4025c6ded34eb2b6)
+
+Each package's manifest.json records its licence, exact source, version and the sha256 of every
+upstream file used.

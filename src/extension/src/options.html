@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Parla — settings</title>
+<link rel="stylesheet" href="ui.css">
+</head>
+<body class="options">
+  <h1 data-i18n="ext.name">Parla — AI noise suppression</h1>
+  <p class="muted" data-i18n="ext.optionsIntro">AI noise suppression that runs on this device: your audio never leaves it.</p>
+
+  <div class="tabs" role="tablist" aria-label="Parla">
+    <button role="tab" id="tab-settings" aria-controls="panel-settings" data-i18n="ext.settings">Settings</button>
+    <button role="tab" id="tab-language" aria-controls="panel-language" data-i18n="ext.language">Language</button>
+    <button role="tab" id="tab-privacy" aria-controls="panel-privacy" data-i18n="ext.privacy">Privacy</button>
+  </div>
+
+  <main>
+  <section class="card" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
+    <h2 data-i18n="ext.engine">Engine</h2>
+    <label class="label" for="mode" data-i18n="ext.whereEngine">Where the engine runs</label>
+    <select id="mode">
+      <option value="auto" data-i18n="ext.modeAuto">Automatic (in the page; isolated where the site forbids it)</option>
+      <option value="page" data-i18n="ext.modeAlwaysPage">Always in the page</option>
+      <option value="isolated" data-i18n="ext.modeAlwaysIsolated">Always isolated (extension worker)</option>
+    </select>
+    <h2 data-i18n="ext.sites">Sites</h2>
+    <label class="switch small" for="allOn">
+      <input type="checkbox" id="allOn" role="switch">
+      <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+      <span data-i18n="ext.allOn">On for all sites by default</span>
+    </label>
+    <div id="sites" class="muted" data-i18n="ext.noSites">No per-site settings yet.</div>
+  </section>
+
+  <section class="card" role="tabpanel" id="panel-language" aria-labelledby="tab-language" hidden>
+    <h2 id="langLabel" data-i18n="ext.language">Language</h2>
+    <select id="lang" aria-labelledby="langLabel"><option value="auto" data-i18n="ext.languageAuto">Automatic (browser language)</option></select>
+  </section>
+
+  <section class="card" role="tabpanel" id="panel-privacy" aria-labelledby="tab-privacy" hidden>
+    <h2 data-i18n="ext.privacy">Privacy</h2>
+    <label class="switch small" for="telemetry">
+      <input type="checkbox" id="telemetry" role="switch" aria-describedby="telemetryHelp">
+      <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+      <span data-i18n="ext.tel.label">Send anonymous technical reports</span>
+    </label>
+    <p class="muted" id="telemetryHelp" data-i18n="ext.tel.help">Errors, performance and the kind of calling app, with a random ID that changes every month. Never audio, page content or addresses.</p>
+    <label class="switch small" for="diagnostics">
+      <input type="checkbox" id="diagnostics" role="switch" aria-describedby="diagnosticsHelp">
+      <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+      <span data-i18n="ext.diag.label">Detailed diagnostics</span>
+    </label>
+    <p class="muted" id="diagnosticsHelp" data-i18n="ext.diag.help">Also sends the domain of the site where Parla ran (for example meet.google.com, never the rest of the address) and a permanent random ID, so a problem on one site can be traced. Off unless you turn it on.</p>
+  </section>
+  </main>
+
+  <p class="muted credit" id="credit">Free and open source · made by <a href="https://github.com/tvildo" target="_blank" rel="noopener">tvildo</a> · <a href="https://parla.cc" target="_blank" rel="noopener">parla.cc</a></p>
+  <p class="muted" id="version" translate="no"></p>
+  <p class="muted" id="managed" data-i18n="ext.managedAll" hidden>Settings marked as managed are set by your organization and can't be changed here.</p>
+  <script src="options.js" type="module"></script>
+</body>
+</html>

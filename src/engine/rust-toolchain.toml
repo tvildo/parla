@@ -1,0 +1,5 @@
+# The compiler every build uses (CI, Docker images, local): wasm and native outputs are reproducible per version.
+[toolchain]
+channel = "1.99.0"
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"

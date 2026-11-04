@@ -1,0 +1,21 @@
+// Build scripts, tools and tests: TypeScript that Node 24 runs as is (type stripping), checked here, never emitted.
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "moduleDetection": "force",
+    "types": ["node"],
+    "strict": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    // the SDK's browser test borrows the tests' Playwright (tests/package.json)
+    "paths": { "playwright-core": ["./tests/node_modules/playwright-core/index.d.ts"] }
+  },
+  "include": ["tools/*.ts", "src/extension/build.ts", "src/sdk/*.ts", "src/telemetry/worker.test.ts", "src/engine/vi_otel/js/*.ts"]
+}

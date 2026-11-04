@@ -1,0 +1,67 @@
+/* Popup + options: the Parla palette (the website's: dark, indigo -> violet), light follows the system. */
+:root {
+  --bg: #0c0c14; --surface: #15152a; --elevated: #23233d; --primary: #7c7cff; --primary-2: #b36bff; --accent: #a5a5ff;
+  --success: #4ade80; --warning: #fbbf24; --text: #f4f4f8; --muted: #9a9ab0; --border: #2a2a44;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root { --bg: #f6f6fb; --surface: #fff; --elevated: #ececf6; --primary: #5b5bf7; --primary-2: #8b4ff0; --accent: #4f46e5; --text: #15152a; --muted: #4b4b63; --border: #dedeed; color-scheme: light; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, "Segoe UI", Roboto, sans-serif; }
+body.popup { width: 340px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+body.options { max-width: 640px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-size: 22px; margin: 0; } h2 { font-size: 16px; margin: 4px 0; }
+a { color: var(--accent); }
+.head { display: flex; gap: 10px; align-items: center; }
+.logo { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; display: grid; place-items: center; font: 800 15px system-ui, sans-serif; }
+.title { font-weight: 600; font-size: 14px; margin: 0; }
+body.popup main { display: flex; flex-direction: column; gap: 10px; }
+.muted { color: var(--muted); font-size: 12.5px; margin: 0; }
+.notice { color: var(--warning); font-size: 12.5px; margin: 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; gap: 8px; align-items: center; } .between { justify-content: space-between; }
+.label { font-size: 12px; color: var(--muted); }
+select, input[type=text], input[type=url] { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font: inherit; }
+input[type=range] { width: 100%; accent-color: var(--primary); }
+button { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; border: 0; border-radius: 8px; padding: 7px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.foot { display: flex; justify-content: space-between; align-items: center; }
+.switch { display: flex; gap: 8px; align-items: center; cursor: pointer; font-weight: 600; }
+.switch.small { font-weight: 400; font-size: 13px; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.track { width: 36px; height: 20px; border-radius: 999px; background: var(--elevated); border: 1px solid var(--border); position: relative; transition: background .15s; }
+.thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s; }
+.switch input:checked + .track { background: linear-gradient(135deg, var(--primary), var(--primary-2)); border-color: transparent; }
+.switch input:checked + .track .thumb { transform: translateX(16px); background: #fff; }
+.switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+.switch input:disabled + .track { opacity: .5; }
+[dir="rtl"] .thumb { left: auto; right: 2px; }
+[dir="rtl"] .switch input:checked + .track .thumb { transform: translateX(-16px); }
+@media (prefers-reduced-motion: reduce) { .track, .thumb { transition: none; } }
+.mic { width: 14px; height: 14px; border-radius: 50%; background: var(--elevated); border: 1px solid var(--border); }
+.mic.on { background: var(--muted); } .mic.live { background: var(--success); box-shadow: 0 0 0 4px rgba(34, 197, 94, .25); }
+@media (prefers-reduced-motion: reduce) { .track, .thumb { transition: none; } }
+/* popup: live meter. Dim layer = the microphone, bright layer = what the call hears; the gap = removed noise */
+.meter { display: flex; flex-direction: column; gap: 5px; margin: 2px 0 4px; }
+.meterV { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.bar { position: relative; height: 10px; border-radius: 999px; background: var(--elevated); overflow: hidden; }
+.lvl { position: absolute; inset-block: 0; inset-inline-start: 0; width: 0; border-radius: 999px; }
+.lvl.in { background: repeating-linear-gradient(135deg, var(--muted) 0 3px, transparent 3px 6px); opacity: .55; }
+.lvl.out { background: linear-gradient(90deg, var(--primary), var(--primary-2)); }
+.legend { gap: 14px; font-size: 11.5px; color: var(--muted); }
+.legend > span { display: flex; gap: 5px; align-items: center; }
+.key { width: 14px; height: 8px; border-radius: 4px; display: inline-block; }
+.key.in { background: repeating-linear-gradient(135deg, var(--muted) 0 2px, transparent 2px 4px); opacity: .8; }
+.key.out { background: linear-gradient(90deg, var(--primary), var(--primary-2)); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: -8px; }
+.tabs [role=tab] { background: transparent; color: var(--muted); border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 8px 14px; margin-bottom: -1px; font-weight: 600; }
+.tabs [role=tab]:hover { color: var(--text); }
+.tabs [role=tab][aria-selected=true] { color: var(--text); border-bottom-color: var(--primary); }
+/* `hidden` must win over the display of .card / .meter / .row (tab panels, the meter, notices) */
+[hidden] { display: none !important; }
+.switch.small + .muted { margin: -2px 0 6px 44px; }
+[dir="rtl"] .switch.small + .muted { margin: -2px 44px 6px 0; }
+/* the per-site list under the "all sites" switch is not that switch's help text */
+.switch.small + #sites, [dir="rtl"] .switch.small + #sites { margin: 2px 0 0; }

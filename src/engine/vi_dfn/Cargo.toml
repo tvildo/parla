@@ -1,0 +1,11 @@
+[package]
+name = "vi_dfn"
+version = "0.1.0"
+edition = "2021"
+description = "Plugin `dfn`: DeepFilterNet3 streaming DSP (ERB features/gains, deep filtering) around a vi_graph network"
+
+[dependencies]
+vi_engine = { path = "../vi_engine" }
+vi_audio = { path = "../vi_audio" }
+vi_kernels = { path = "../vi_kernels" }
+vi_graph = { path = "../vi_graph" }

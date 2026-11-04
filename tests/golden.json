@@ -1,0 +1,25 @@
+{
+  "outputs": {
+    "passthrough": {
+      "AMD64-win32": "16a302846d3bd842450af7561dae08ae901e436780f5eac7ad394520c6f28608"
+    },
+    "spectral": {
+      "AMD64-win32": "a46e8f0ca4c1d94eaea810527e6c8c1cb635493b5c5b49dcc09ea09fc3bc2445"
+    },
+    "gtcrn": {
+      "AMD64-win32": "bf57cdd543e18acdb742f6097c25226b0718982135e1ded96d4bf7a95624bbe1"
+    },
+    "dtln": {
+      "AMD64-win32": "5a0390049ac7cb79db4414c9aca2a7689a14dfe467d7ee476c16745381539bd8"
+    },
+    "nsnet2": {
+      "AMD64-win32": "7f661a1fb6200a2d73d27db9737fdacdaec7b11e8866195b49ae26948fb48050"
+    },
+    "rnnoise": {
+      "AMD64-win32": "9ecb71000ddac4ac32623c81b2de1babd783a14f12b6ff8ae86347ea3abd1cb7"
+    },
+    "deepfilternet3": {
+      "AMD64-win32": "d9eff13d9c23613c5af6ff774c521d5ad2e6f2f120e37a1fd870fb708db16fc0"
+    }
+  }
+}

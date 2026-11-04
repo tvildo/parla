@@ -1,0 +1,9 @@
+[package]
+name = "vi_engine"
+version = "0.1.0"
+edition = "2021"
+description = "Engine contract: NoiseEngine + ModelCore traits, pipeline driver (vi_audio front/back around any ModelCore), passthrough"
+
+[dependencies]
+vi_audio = { path = "../vi_audio" }
+vi_kernels = { path = "../vi_kernels" }

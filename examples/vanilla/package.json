@@ -1,0 +1,6 @@
+{
+  "name": "parla-example-vanilla",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@tvildo/parla": "file:../../build/tvildo-parla-0.1.0.tgz" }
+}

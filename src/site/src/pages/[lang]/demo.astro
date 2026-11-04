@@ -1,0 +1,7 @@
+---
+import View from "../../views/DemoPage.astro";
+import { langPaths } from "../../i18n";
+export const getStaticPaths = langPaths;
+const { lang } = Astro.params;
+---
+<View lang={lang} />

@@ -1,0 +1,9 @@
+{
+  "name": "parla-release-tools",
+  "private": true,
+  "description": "The store upload tools the release workflow runs (installed with npm ci from the lockfile, scripts off).",
+  "devDependencies": {
+    "chrome-webstore-upload-cli": "4.0.2",
+    "web-ext": "10.8.0"
+  }
+}

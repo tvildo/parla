@@ -1,0 +1,22 @@
+---
+import Base from "../layouts/Base.astro";
+import { translator } from "../i18n";
+
+interface Props { lang: string }
+const { lang } = Astro.props;
+const t = translator(lang);
+---
+<Base lang={lang} page="privacy/" title={t("privacy.title")} description={t("privacy.description")}>
+  <main class="prose">
+    <h1>{t("privacy.h1")}</h1>
+    <p>{t("privacy.short")}</p>
+    <h2>{t("privacy.ext.h")}</h2>
+    <ul>{[1, 2, 3, 4, 5].map((i) => <li>{t(`privacy.ext.${i}`)}</li>)}</ul>
+    <h2>{t("privacy.rep.h")}</h2>
+    <ul>{[1, 2, 3].map((i) => <li>{t(`privacy.rep.${i}`)}</li>)}</ul>
+    <h2>{t("privacy.site.h")}</h2>
+    <ul>{[1, 2].map((i) => <li>{t(`privacy.site.${i}`)}</li>)}</ul>
+    <h2>{t("privacy.open.h")}</h2>
+    <p>{t("privacy.open.p")}</p>
+  </main>
+</Base>

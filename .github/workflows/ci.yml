@@ -1,0 +1,252 @@
+# Build and release (docs/releasing.md).
+#   - every push to `development` / `master` and every pull request: build everything; the files are the run's artifact
+#   - a push (merge) to `master`: the next semantic version from the commits since the last tag (feat -> minor,
+#     fix / other -> patch, `!` or BREAKING CHANGE -> major), stamped into every build, then a GitHub release
+#     `vX.Y.Z` (the tag) with the files to download, and the extension to the Chrome Web Store and Firefox Add-ons,
+#     the package to npm, the report receiver to Cloudflare (each skipped while its secrets are missing)
+# Supply chain: actions pinned by commit SHA, exact Node / Rust / binaryen versions (binaryen checked by SHA-256),
+# npm installs only from lockfiles with install scripts off (.npmrc) and registry signatures verified, the release
+# tools from tools/release/package-lock.json, no token left in .git (persist-credentials: false). Dependabot keeps
+# the pins current (.github/dependabot.yml).
+name: Build and release
+
+on:
+  push:
+    branches: [master, development]
+  pull_request:
+    branches: [master, development]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump (on master; auto = from the commit messages)
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 26.13.0
+  BINARYEN: version_133
+  BINARYEN_SHA256: 2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.next.outputs.version }}
+      tag: ${{ steps.next.outputs.tag }}
+      release: ${{ steps.next.outputs.release }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - id: next
+        name: Next version
+        env:
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: |
+          node tools/next_version.ts --bump "$BUMP" | tee -a "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" != pull_request ] && [ "$GITHUB_REF" = refs/heads/master ] && grep -q '^version=.' "$GITHUB_OUTPUT"; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: version
+    runs-on: ubuntu-24.04
+    env:
+      # a release build carries the release version everywhere; other builds keep the source's
+      VERSION_ARG: ${{ needs.version.outputs.release == 'true' && format('--version {0}', needs.version.outputs.version) || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Rust (src/engine/rust-toolchain.toml) and wasm-opt (checked by SHA-256)
+        run: |
+          rustup toolchain install 1.99.0 --profile minimal --target wasm32-unknown-unknown
+          rustup default 1.99.0
+          curl -fsSL -o "$RUNNER_TEMP/binaryen.tgz" "https://github.com/WebAssembly/binaryen/releases/download/$BINARYEN/binaryen-$BINARYEN-x86_64-linux.tar.gz"
+          echo "$BINARYEN_SHA256  $RUNNER_TEMP/binaryen.tgz" | sha256sum -c -
+          tar xzf "$RUNNER_TEMP/binaryen.tgz" -C "$RUNNER_TEMP"
+          echo "WASM_OPT=$RUNNER_TEMP/binaryen-$BINARYEN/bin/wasm-opt" >> "$GITHUB_ENV"
+
+      - name: npm ci from the lockfiles (no install scripts), registry signatures verified
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --prefix tests --no-audit --no-fund
+          npm audit signatures
+          npm audit signatures --prefix tests
+
+      - name: Type-check
+        run: python3 build.py check
+
+      - name: Engine (the three builds the extension and the SDK ship)
+        run: for i in 0 1 2; do python3 build.py wasm --only $i; done
+
+      - name: Extension for Chrome and Firefox
+        run: |
+          python3 build.py extension --zip $VERSION_ARG
+          python3 build.py extension --browser firefox --zip $VERSION_ARG
+
+      - name: npm package and SDK files
+        run: |
+          python3 build.py npm $VERSION_ARG
+          python3 build.py sdk --models deepfilternet3,gtcrn,rnnoise $VERSION_ARG
+          (cd build/sdk && zip -qr ../sdk.zip .)
+
+      - name: Browser tests (extension in Chromium and Firefox, website, SDK, examples; Docker)
+        run: |
+          python3 build.py site
+          python3 build.py examples
+          python3 build.py test
+
+      - name: Website image (Dockerfile; its base images are pinned and updated by Dependabot)
+        run: |
+          docker build -q -t parla-site .
+          docker run -d --rm -p 8080:8080 --name parla-site parla-site
+          sleep 2
+          curl -fsS -o /dev/null http://127.0.0.1:8080/ && curl -fsS -o /dev/null http://127.0.0.1:8080/demo/
+          docker rm -f parla-site
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: parla
+          path: |
+            build/extension.zip
+            build/extension-firefox.zip
+            build/tvildo-parla-*.tgz
+            build/sdk.zip
+
+  release:
+    needs: [version, build]
+    if: needs.version.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: parla
+      - name: Tag and GitHub release with the files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          mv extension.zip "parla-chrome-$TAG.zip"
+          mv extension-firefox.zip "parla-firefox-$TAG.zip"
+          mv sdk.zip "parla-sdk-$TAG.zip"
+          gh release create "$TAG" parla-*.zip tvildo-parla-*.tgz --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Parla $TAG" --generate-notes
+
+  chrome:
+    needs: [version, release]
+    runs-on: ubuntu-24.04
+    environment: stores
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: parla
+          path: dist
+      - name: Chrome Web Store (upload and publish; the uploader from tools/release's lockfile)
+        env:
+          EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$REFRESH_TOKEN" ]; then echo "::notice::no Chrome Web Store secrets yet: skipped"; exit 0; fi
+          npm ci --prefix tools/release --no-audit --no-fund && npm audit signatures --prefix tools/release
+          tools/release/node_modules/.bin/chrome-webstore-upload --source dist/extension.zip
+
+  firefox:
+    needs: [version, release]
+    runs-on: ubuntu-24.04
+    environment: stores
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: parla
+      - name: Firefox Add-ons (listed, with the source code; web-ext from tools/release's lockfile)
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$WEB_EXT_API_SECRET" ]; then echo "::notice::no Firefox Add-ons secrets yet: skipped"; exit 0; fi
+          git -C source archive --format=zip -o "$PWD/source.zip" HEAD
+          mkdir firefox && unzip -q extension-firefox.zip -d firefox
+          npm ci --prefix source/tools/release --no-audit --no-fund && npm audit signatures --prefix source/tools/release
+          source/tools/release/node_modules/.bin/web-ext sign --source-dir firefox --artifacts-dir web-ext-artifacts \
+            --channel listed --upload-source-code source.zip --approval-timeout 0
+
+  npm:
+    needs: [version, release]
+    runs-on: ubuntu-24.04
+    environment: stores
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: parla
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+      - name: npm publish @tvildo/parla
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then echo "::notice::no npm token yet: skipped"; exit 0; fi
+          npm publish tvildo-parla-*.tgz --access public
+
+  telemetry:
+    needs: [version, release]
+    runs-on: ubuntu-24.04
+    environment: telemetry
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Report receiver to Cloudflare (t.parla.cc)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # the limits live in the environment's variables, so a release never resets a share turned down by hand
+          SAMPLE: ${{ vars.TELEMETRY_SAMPLE || '1' }}
+          DAILY_LIMIT: ${{ vars.TELEMETRY_DAILY_LIMIT || '80000' }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::notice::no Cloudflare secrets yet: skipped"; exit 0; fi
+          npm ci --no-audit --no-fund && npm audit signatures
+          node src/telemetry/worker.test.ts
+          python3 build.py telemetry-deploy --sample "$SAMPLE" --daily-limit "$DAILY_LIMIT"

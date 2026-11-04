@@ -1,0 +1,29 @@
+// The code that runs in browsers (and the Cloudflare Worker). `python build.py ts`: tsc checks it and writes the .d.ts
+// files (the SDK ships its own), tools/ts_emit.ts writes the JavaScript (types erased, lines unchanged), both to
+// build/js/<same path>. Builds copy from there. Node runs the other .ts files (build scripts, tools, tests) as they are:
+// tsconfig.node.json checks those.
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "types": ["chrome", "react"],
+    "strict": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    // plain JavaScript with the types erased: what Node runs, what browsers get
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "stripInternal": true,
+    "newLine": "lf",
+    "rootDir": ".",
+    "outDir": "build/js",
+    "skipLibCheck": true
+  },
+  "include": ["src/types", "src/engine/js", "src/extension/src", "src/sdk/src", "src/telemetry/worker.ts"]
+}

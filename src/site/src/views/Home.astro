@@ -1,0 +1,64 @@
+---
+import Base from "../layouts/Base.astro";
+import { seg, translator } from "../i18n";
+
+interface Props { lang: string }
+const { lang } = Astro.props;
+const t = translator(lang);
+const here = `/${seg(lang)}`;
+const cards = ["ai", "any", "quality", "safe"];
+const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack huddles", t("site.how.anyApp")];
+---
+<Base lang={lang} page="" title={t("site.title")} description={t("site.description")}>
+  <main>
+    <div class="hero">
+      <div class="logo" aria-hidden="true">P</div>
+      <h1>{t("site.hero1")}<br><span class="grad">{t("site.hero2")}</span></h1>
+      <p class="lead">{t("site.lead")}</p>
+      <div class="actions">
+        <a class="btn primary" href={`${here}demo/`}>{t("site.ctaTry")}</a>
+        <a class="btn" href={`${here}#install`}>{t("site.ctaGet")}</a>
+      </div>
+      <p class="note">{t("site.note")}</p>
+      <div class="wave" aria-hidden="true">{Array.from({ length: 21 }, (_, i) => <i style={`animation-delay:${(Math.sin(i / 3) * 0.6 + i * 0.06).toFixed(2)}s`}></i>)}</div>
+    </div>
+
+    <section id="how">
+      <h2>{t("site.how.title")}</h2>
+      <p class="sub">{t("site.how.sub")}</p>
+      <div class="grid">
+        {cards.map((c) => <div class="card"><h3>{t(`site.how.${c}.t`)}</h3><p>{t(`site.how.${c}.p`)}</p></div>)}
+      </div>
+      <div class="apps" aria-label={t("site.worksWith")}>{apps.map((a) => <span>{a}</span>)}</div>
+    </section>
+
+    <section id="see">
+      <h2>{t("site.shots.title")}</h2>
+      <div class="shots">
+        <figure class="shot shot-popup">
+          <img src="/screenshots/extension-popup.png" width="340" height="415" alt={t("site.shots.popup")} loading="lazy" decoding="async" />
+          <figcaption>{t("site.shots.popup")}</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="/screenshots/demo.png" width="720" height="650" alt={t("site.shots.demo")} loading="lazy" decoding="async" />
+          <figcaption>{t("site.shots.demo")}</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="install">
+      <h2>{t("site.install.title")}</h2>
+      <p class="sub">{t("site.install.sub")}</p>
+      <div class="actions start">
+        <span class="btn primary" aria-disabled="true">{t("site.install.chrome")}</span>
+        <span class="btn" aria-disabled="true">{t("site.install.firefox")}</span>
+        <a class="btn" href="https://github.com/tvildo/parla/blob/main/docs/extension.md#install">{t("site.install.build")}</a>
+      </div>
+    </section>
+
+    <section id="open">
+      <h2>{t("site.open.title")}</h2>
+      <p class="sub">{t("site.open.sub")}</p>
+    </section>
+  </main>
+</Base>

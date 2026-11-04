@@ -1,0 +1,30 @@
+# Keeps every pin current (supply chain: pinned + updated, never floating): GitHub actions (commit SHAs), npm lockfiles,
+# Docker base images (digests). Pull requests go to `development`, where CI builds and tests them.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: development
+    schedule: { interval: weekly }
+    groups:
+      actions: { patterns: ["*"] }
+
+  - package-ecosystem: npm
+    directories: [/, /tests, /src/site, /tools/release, /examples/react-vite]
+    target-branch: development
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch: { update-types: [minor, patch] }
+
+  - package-ecosystem: docker
+    directories: [/, /tests]
+    target-branch: development
+    schedule: { interval: weekly }
+    ignore:
+      # a new Rust or Node major goes everywhere at once (rust-toolchain.toml, the workflow, the images) and is
+      # checked against the golden outputs: a deliberate upgrade, not a pull request per image
+      - dependency-name: rust
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      - dependency-name: node
+        update-types: [version-update:semver-major]

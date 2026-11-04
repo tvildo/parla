@@ -1,0 +1,52 @@
+{
+ "name": "spectral",
+ "display_name": "Spectral Wiener (classic DSP baseline, 16 kHz)",
+ "engine": "graph",
+ "graph": "graph.json",
+ "weights": "weights.bin",
+ "sample_rate": 16000,
+ "frame_size": 256,
+ "latency": 256,
+ "local_only": false,
+ "license": "Apache-2.0 (this repository; own implementation)",
+ "source": "tools/make_spectral.py (min-statistics noise PSD via continuous minimum tracking, decision-directed a-priori SNR, Wiener gain)",
+ "version": "1",
+ "params": {
+  "a_s": 0.7,
+  "one_m_a_s": 0.30000000000000004,
+  "g": 0.998,
+  "k": 0.05,
+  "b": 0.96,
+  "bias": 1.5,
+  "eps": 1e-10,
+  "a_dd": 0.98,
+  "one_m_a_dd": 0.020000000000000018,
+  "one": 1.0,
+  "zero": 0.0,
+  "gmin": 0.1778279410038923
+ },
+ "pipeline": {
+  "sample_rate": 16000,
+  "hop": 256,
+  "frames_per_call": 1,
+  "input": "P",
+  "output": "gain",
+  "graph_latency": 0,
+  "front": {
+   "type": "stft",
+   "n_fft": 512,
+   "window": "sqrt_hann",
+   "feature": "power"
+  },
+  "back": {
+   "type": "istft",
+   "source": "mag_mask",
+   "window": "sqrt_hann"
+  }
+ },
+ "sha256": {
+  "graph.json": "cc7829034dbe0fcca51eef976565c00364efbec8d66c1bcf5a71ea87905ccb30",
+  "weights.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ },
+ "package_bytes": 2962
+}

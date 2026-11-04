@@ -1,0 +1,11 @@
+# LF in the repository and in every checkout (Windows included): the build outputs and the shipped extension stay
+# byte-identical across platforms.
+* text=auto eol=lf
+*.wasm binary
+*.bin binary
+*.png binary
+*.jpg binary
+*.webp binary
+*.ico binary
+*.wav binary
+*.tgz binary

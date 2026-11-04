@@ -1,0 +1,135 @@
+{
+ "name": "rnnoise",
+ "display_name": "RNNoise v0.1.1 (48 kHz, Bark-band GRU + pitch filter)",
+ "engine": "rnnoise",
+ "weights": "weights.bin",
+ "sample_rate": 48000,
+ "frame_size": 480,
+ "latency": 480,
+ "local_only": false,
+ "license": "BSD-3-Clause (Copyright (c) 2017 Mozilla, 2007-2017 Jean-Marc Valin, 2005-2017 Xiph.Org Foundation, 2003-2004 Mark Borgerding; LICENSE)",
+ "source": "https://github.com/xiph/rnnoise/blob/6cbfd53eb348a8d394e0757b4025c6ded34eb2b6/src/rnn_data.c",
+ "version": "tag v0.1.1 = 6cbfd53eb348a8d394e0757b4025c6ded34eb2b6 (model of Valin, 'A Hybrid DSP/Deep Learning Approach to Real-Time Full-Band Speech Enhancement', MMSP 2018)",
+ "upstream_sha256": {
+  "src/rnn_data.c": "7b90ed18f065a34597d80b4c00e140a7c5eb6380ef8c9c6bf265384c944ae708"
+ },
+ "published_metrics": "paper: PESQ (P.862) gains over noisy at 0-20 dB SNR on their own test mixes; third-party VCTK-DEMAND: PESQ ~2.3, STOI ~0.92 (commonly reported)",
+ "notes": "Custom-DSP plugin `rnnoise` (rust/vi_rnnoise): 960-pt FFT with Vorbis power-complementary window, 22 Bark-ish bands (eband5ms), 42 features (cepstrum of log band energies + deltas, pitch correlation DCT, pitch period, spectral variability), pitch analysis (2x decimation + LPC whitening, coarse/fine xcorr search, doubling removal), comb pitch filter, band-gain interpolation, gain smoothing, OLA. Input/output scaled to the int16 range as the model expects.",
+ "config": {
+  "layers": [
+   {
+    "name": "input_dense",
+    "inputs": 42,
+    "neurons": 24,
+    "activation": "tanh",
+    "tensors": {
+     "weights": {
+      "offset": 0,
+      "size": 1008
+     },
+     "bias": {
+      "offset": 1008,
+      "size": 24
+     }
+    }
+   },
+   {
+    "name": "vad_gru",
+    "inputs": 24,
+    "neurons": 24,
+    "activation": "relu",
+    "tensors": {
+     "weights": {
+      "offset": 1032,
+      "size": 1728
+     },
+     "recurrent_weights": {
+      "offset": 2760,
+      "size": 1728
+     },
+     "bias": {
+      "offset": 4488,
+      "size": 72
+     }
+    }
+   },
+   {
+    "name": "noise_gru",
+    "inputs": 90,
+    "neurons": 48,
+    "activation": "relu",
+    "tensors": {
+     "weights": {
+      "offset": 4560,
+      "size": 12960
+     },
+     "recurrent_weights": {
+      "offset": 17520,
+      "size": 6912
+     },
+     "bias": {
+      "offset": 24432,
+      "size": 144
+     }
+    }
+   },
+   {
+    "name": "denoise_gru",
+    "inputs": 114,
+    "neurons": 96,
+    "activation": "relu",
+    "tensors": {
+     "weights": {
+      "offset": 24576,
+      "size": 32832
+     },
+     "recurrent_weights": {
+      "offset": 57408,
+      "size": 27648
+     },
+     "bias": {
+      "offset": 85056,
+      "size": 288
+     }
+    }
+   },
+   {
+    "name": "denoise_output",
+    "inputs": 96,
+    "neurons": 22,
+    "activation": "sigmoid",
+    "tensors": {
+     "weights": {
+      "offset": 85344,
+      "size": 2112
+     },
+     "bias": {
+      "offset": 87456,
+      "size": 22
+     }
+    }
+   },
+   {
+    "name": "vad_output",
+    "inputs": 24,
+    "neurons": 1,
+    "activation": "sigmoid",
+    "tensors": {
+     "weights": {
+      "offset": 87478,
+      "size": 24
+     },
+     "bias": {
+      "offset": 87502,
+      "size": 1
+     }
+    }
+   }
+  ],
+  "input_scale": 32768.0
+ },
+ "sha256": {
+  "weights.bin": "a20413b1d9b2f825274fab46e8d4ac4603fbfab4b489f1fb8308e5c9053c8f19"
+ },
+ "package_bytes": 350012
+}

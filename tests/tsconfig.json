@@ -1,0 +1,10 @@
+// The browser tests (Playwright). `npm run check` at the repository root runs this too.
+{
+  "compilerOptions": {
+    "target": "ES2022", "module": "ESNext", "moduleResolution": "bundler", "moduleDetection": "force",
+    "strict": true, "noEmit": true, "skipLibCheck": true, "allowImportingTsExtensions": true,
+    // node: the test runner; chrome: code evaluated in the extension's service worker
+    "types": ["node", "chrome"]
+  },
+  "include": ["*.ts"]
+}

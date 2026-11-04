@@ -1,0 +1,21 @@
+# vi workspace: std-only noise-suppression engine ("mini Ollama in the browser").
+#   vi_kernels  SIMD math (always opt-level 3)        vi_audio   shared audio shell (FFT, stages, resampler, json)
+#   vi_engine   ModelCore/NoiseEngine traits + pipeline driver + passthrough
+#   vi_graph / vi_dfn / vi_rnnoise   model plugins
+#   vi_rs       top crate: plugin registry (cargo features), C ABI (wasm cdylib), Manifest, vi_cli
+[workspace]
+resolver = "2"
+members = ["vi_kernels", "vi_audio", "vi_engine", "vi_graph", "vi_rnnoise", "vi_dfn", "vi_rs", "vi_otel", "vi_otel_wasm"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+debug = false
+strip = true
+
+# kernels always at opt-level 3 (wasm builds set CARGO_PROFILE_RELEASE_OPT_LEVEL=z and LTO off,
+# see build.py wasm: hot loops stay fast, load-time code stays small)
+[profile.release.package.vi_kernels]
+opt-level = 3

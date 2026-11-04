@@ -1,0 +1,395 @@
+{
+"format": "vi-graph",
+"version": 1,
+"name": "spectral",
+"inputs": [
+{
+"name": "P",
+"shape": [
+1,
+257
+]
+},
+{
+"name": "S_in",
+"shape": [
+1,
+257
+]
+},
+{
+"name": "Pmin_in",
+"shape": [
+1,
+257
+]
+},
+{
+"name": "A_in",
+"shape": [
+1,
+257
+]
+}
+],
+"outputs": [
+{
+"name": "gain"
+}
+],
+"states": [
+{
+"in": "S_in",
+"out": "S_out",
+"shape": [
+1,
+257
+]
+},
+{
+"in": "Pmin_in",
+"out": "Pmin_out",
+"shape": [
+1,
+257
+]
+},
+{
+"in": "A_in",
+"out": "A_out",
+"shape": [
+1,
+257
+]
+}
+],
+"initializers": {
+"a_s": {
+"shape": [],
+"value": [
+0.7
+]
+},
+"one_m_a_s": {
+"shape": [],
+"value": [
+0.30000000000000004
+]
+},
+"g": {
+"shape": [],
+"value": [
+0.998
+]
+},
+"k": {
+"shape": [],
+"value": [
+0.05
+]
+},
+"b": {
+"shape": [],
+"value": [
+0.96
+]
+},
+"bias": {
+"shape": [],
+"value": [
+1.5
+]
+},
+"eps": {
+"shape": [],
+"value": [
+1e-10
+]
+},
+"a_dd": {
+"shape": [],
+"value": [
+0.98
+]
+},
+"one_m_a_dd": {
+"shape": [],
+"value": [
+0.020000000000000018
+]
+},
+"one": {
+"shape": [],
+"value": [
+1.0
+]
+},
+"zero": {
+"shape": [],
+"value": [
+0.0
+]
+},
+"gmin": {
+"shape": [],
+"value": [
+0.1778279410038923
+]
+}
+},
+"nodes": [
+{
+"op": "Mul",
+"name": "s1",
+"inputs": [
+"a_s",
+"S_in"
+],
+"outputs": [
+"s1"
+]
+},
+{
+"op": "Mul",
+"name": "s2",
+"inputs": [
+"one_m_a_s",
+"P"
+],
+"outputs": [
+"s2"
+]
+},
+{
+"op": "Add",
+"name": "S_out",
+"inputs": [
+"s1",
+"s2"
+],
+"outputs": [
+"S_out"
+]
+},
+{
+"op": "Mul",
+"name": "bS",
+"inputs": [
+"b",
+"S_in"
+],
+"outputs": [
+"bS"
+]
+},
+{
+"op": "Sub",
+"name": "d",
+"inputs": [
+"S_out",
+"bS"
+],
+"outputs": [
+"d"
+]
+},
+{
+"op": "Mul",
+"name": "kd",
+"inputs": [
+"k",
+"d"
+],
+"outputs": [
+"kd"
+]
+},
+{
+"op": "Mul",
+"name": "gp",
+"inputs": [
+"g",
+"Pmin_in"
+],
+"outputs": [
+"gp"
+]
+},
+{
+"op": "Add",
+"name": "upd",
+"inputs": [
+"gp",
+"kd"
+],
+"outputs": [
+"upd"
+]
+},
+{
+"op": "Min",
+"name": "Pmin_out",
+"inputs": [
+"S_out",
+"upd"
+],
+"outputs": [
+"Pmin_out"
+]
+},
+{
+"op": "Mul",
+"name": "nb",
+"inputs": [
+"bias",
+"Pmin_out"
+],
+"outputs": [
+"nb"
+]
+},
+{
+"op": "Add",
+"name": "noise",
+"inputs": [
+"nb",
+"eps"
+],
+"outputs": [
+"noise"
+]
+},
+{
+"op": "Div",
+"name": "r1",
+"inputs": [
+"A_in",
+"noise"
+],
+"outputs": [
+"r1"
+]
+},
+{
+"op": "Mul",
+"name": "t1",
+"inputs": [
+"a_dd",
+"r1"
+],
+"outputs": [
+"t1"
+]
+},
+{
+"op": "Div",
+"name": "post",
+"inputs": [
+"P",
+"noise"
+],
+"outputs": [
+"post"
+]
+},
+{
+"op": "Sub",
+"name": "pm1",
+"inputs": [
+"post",
+"one"
+],
+"outputs": [
+"pm1"
+]
+},
+{
+"op": "Max",
+"name": "pr",
+"inputs": [
+"pm1",
+"zero"
+],
+"outputs": [
+"pr"
+]
+},
+{
+"op": "Mul",
+"name": "t2",
+"inputs": [
+"one_m_a_dd",
+"pr"
+],
+"outputs": [
+"t2"
+]
+},
+{
+"op": "Add",
+"name": "xi",
+"inputs": [
+"t1",
+"t2"
+],
+"outputs": [
+"xi"
+]
+},
+{
+"op": "Add",
+"name": "den",
+"inputs": [
+"xi",
+"one"
+],
+"outputs": [
+"den"
+]
+},
+{
+"op": "Div",
+"name": "g_raw",
+"inputs": [
+"xi",
+"den"
+],
+"outputs": [
+"g_raw"
+]
+},
+{
+"op": "Max",
+"name": "gain",
+"inputs": [
+"g_raw",
+"gmin"
+],
+"outputs": [
+"gain"
+]
+},
+{
+"op": "Mul",
+"name": "g2",
+"inputs": [
+"gain",
+"gain"
+],
+"outputs": [
+"g2"
+]
+},
+{
+"op": "Mul",
+"name": "A_out",
+"inputs": [
+"g2",
+"P"
+],
+"outputs": [
+"A_out"
+]
+}
+]
+}

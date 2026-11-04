@@ -1,0 +1,94 @@
+---
+// Page shell for every language: head (title, description, hreflang alternates), header with the language menu,
+// footer. Links are written root-absolute; build.py makes them relative to each page.
+import "../styles/site.css";
+import { LANGS, DEFAULT, seg, translator } from "../i18n";
+
+interface Props { lang: string; page: "" | "privacy/" | "demo/"; title: string; description: string }
+const { lang, page, title, description } = Astro.props;
+const t = translator(lang);
+const here = `/${seg(lang)}`;
+const href = (code: string) => `/${seg(code)}${page}`;
+const [madeA, madeB] = t("site.footer.made").split("{author}");
+---
+<!doctype html>
+<html lang={lang} dir={t.dir}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<meta name="description" content={description}>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+{LANGS.map((l) => <link rel="alternate" hreflang={l.code} href={new URL(href(l.code), Astro.site).href} />)}
+<link rel="alternate" hreflang="x-default" href={new URL(href(DEFAULT), Astro.site).href} />
+</head>
+<body>
+<a class="skip" href="#content">{t("site.skip")}</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href={here}><span class="logo small" aria-hidden="true">P</span>Parla</a>
+    <nav class="nav-links" aria-label="Main">
+      <a href={`${here}demo/`}>{t("site.nav.try")}</a>
+      <a href={`${here}#how`}>{t("site.nav.how")}</a>
+      <a href={`${here}privacy/`}>{t("site.nav.privacy")}</a>
+      <a href="https://github.com/tvildo/parla/tree/main/docs">{t("site.nav.docs")}</a>
+      <a href="https://github.com/tvildo/parla">{t("site.nav.source")}</a>
+      <details class="langs">
+        <summary aria-label={t("site.nav.language")}>{LANGS.find((l) => l.code === lang)?.name}</summary>
+        <ul>
+          {LANGS.map((l) => <li><a href={href(l.code)} hreflang={l.code} lang={l.code} aria-current={l.code === lang ? "true" : undefined}>{l.name}</a></li>)}
+        </ul>
+      </details>
+    </nav>
+  </header>
+
+  <div class="suggest" id="suggest" hidden>
+    <span id="suggestText"></span>
+    <a id="suggestGo" href="#"></a>
+    <button type="button" id="suggestNo"></button>
+  </div>
+
+  <div id="content" tabindex="-1"><slot /></div>
+
+  <footer class="foot">
+    <span>© Parla · parla.cc · {madeA}<a href="https://github.com/tvildo">tvildo</a>{madeB}</span>
+    <nav><a href={`${here}privacy/`}>{t("site.nav.privacy")}</a><a href="https://github.com/tvildo/parla">{t("site.nav.source")}</a><a href="/licenses.txt">{t("site.nav.licenses")}</a></nav>
+  </footer>
+</div>
+<script is:inline define:vars={{
+  langs: LANGS.map((l) => ({ code: l.code, name: l.name, href: href(l.code) })),
+  lang,
+  suggestions: Object.fromEntries(LANGS.map((l) => [l.code, [translator(l.code)("site.suggest"), translator(l.code)("site.suggestGo"), translator(l.code)("site.suggestNo")]])),
+}}>
+  // Offer the browser's language once (never redirect): only on a page that isn't in it, until dismissed.
+  try {
+    if (!localStorage.getItem("parla.lang")) {
+      const codes = langs.map((l) => l.code);
+      const pick = (tag) => {
+        const t = String(tag).toLowerCase();
+        const exact = codes.find((c) => c.toLowerCase() === t);
+        if (exact) return exact;
+        if (t.startsWith("zh")) return /hant|tw|hk|mo/.test(t) ? "zh-TW" : "zh-CN";
+        const base = t.split("-")[0];
+        return codes.find((c) => c.toLowerCase().split("-")[0] === base) || null;
+      };
+      const want = (navigator.languages || [navigator.language]).map(pick).find(Boolean);
+      if (want && want !== lang) {
+        const l = langs.find((x) => x.code === want);
+        const [text, go, no] = suggestions[want];
+        document.getElementById("suggestText").textContent = text.replace("{language}", l.name);
+        const a = document.getElementById("suggestGo");
+        a.textContent = go;
+        a.href = document.querySelector(`.langs a[hreflang="${want}"]`).href;
+        a.onclick = () => localStorage.setItem("parla.lang", want);
+        const b = document.getElementById("suggestNo");
+        b.textContent = no;
+        b.onclick = () => { localStorage.setItem("parla.lang", lang); document.getElementById("suggest").hidden = true; };
+        document.getElementById("suggest").hidden = false;
+      }
+    }
+  } catch { /* storage blocked: no suggestion */ }
+  for (const a of document.querySelectorAll(".langs a")) a.addEventListener("click", () => { try { localStorage.setItem("parla.lang", a.hreflang); } catch {} });
+</script>
+</body>
+</html>

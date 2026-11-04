@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Parla without a bundler</title></head>
+<body>
+<main>
+  <h1>Parla, plain JavaScript</h1>
+  <button id="start">Start microphone</button>
+  <p id="status" role="status"></p>
+</main>
+<script type="module">
+// No bundler: the browser loads the package's files straight from node_modules (import.meta.url resolves them).
+import { Parla } from './node_modules/@tvildo/parla/dist/parla.js';
+
+document.getElementById('start').onclick = async () => {
+  const status = document.getElementById('status');
+  const mic = (await navigator.mediaDevices.getUserMedia({ audio: { noiseSuppression: false } })).getAudioTracks()[0];
+  try {
+    const parla = await Parla.load({ model: 'deepfilternet3' });
+    const ns = await parla.process(mic);
+    ns.onVoice = ({ speaking, levelDb }) => { status.textContent = `${speaking ? 'speaking' : 'quiet'} · ${Math.round(levelDb)} dBFS`; };
+    window.parla = { track: ns.track, stream: ns };
+    status.textContent = `clean · delay ${Math.round(ns.latencyMs)} ms`;
+  } catch (e) {
+    status.textContent = `Parla could not start (${e.code}: ${e.message}); using the plain microphone`;
+    window.parla = { track: mic, error: e };
+  }
+};
+</script>
+</body>
+</html>

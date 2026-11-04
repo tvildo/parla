@@ -1,0 +1,11 @@
+[package]
+name = "vi_otel_wasm"
+version = "0.1.0"
+edition = "2021"
+description = "Telemetry wasm module for the browser host: vi_otel C ABI (otel_*), loaded by the worklet only when telemetry is enabled"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+vi_otel = { path = "../vi_otel", features = ["c-abi"] }

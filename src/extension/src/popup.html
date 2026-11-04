@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Parla</title>
+<link rel="stylesheet" href="ui.css">
+</head>
+<body class="popup">
+  <header class="head">
+    <span class="logo" aria-hidden="true">P</span>
+    <div>
+      <h1 class="title" data-i18n="ext.title">Noise suppression</h1>
+      <div class="muted" id="site">—</div>
+    </div>
+  </header>
+
+  <main>
+  <section class="card">
+    <div class="row between">
+      <label class="switch" for="siteOn">
+        <input type="checkbox" id="siteOn" role="switch">
+        <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        <span data-i18n="ext.siteOn">On for this site</span>
+      </label>
+      <span class="mic" id="mic" data-i18n-title="ext.speaking" title="Speaking" aria-hidden="true"></span>
+    </div>
+    <p class="muted" id="state" aria-live="polite" data-i18n="ext.startsWhenMic">Starts when the site uses your microphone.</p>
+    <p class="notice" id="error" role="alert" hidden></p>
+  </section>
+
+  <section class="card">
+    <label class="label" for="model" data-i18n="ext.quality">Quality</label>
+    <select id="model">
+      <option value="deepfilternet3" data-i18n="ext.q.best">Best quality · full band</option>
+      <option value="gtcrn" data-i18n="ext.q.lightest">Lightest · wideband</option>
+      <option value="rnnoise" data-i18n="ext.q.light">Light · full band</option>
+    </select>
+    <label class="label" for="strength"><span data-i18n="ext.strength">Strength</span> <span id="strengthV">100%</span></label>
+    <input type="range" id="strength" min="0" max="100" step="5" value="100">
+    <div class="meter" id="meter" hidden>
+      <div class="row between">
+        <span class="label" data-i18n="ext.meter">Background noise</span>
+        <span class="meterV" id="meterV">—</span>
+      </div>
+      <div class="bar" aria-hidden="true"><span class="lvl in" id="barIn"></span><span class="lvl out" id="barOut"></span></div>
+      <div class="row legend" aria-hidden="true">
+        <span><i class="key in"></i><span data-i18n="ext.meter.in">Microphone</span></span>
+        <span><i class="key out"></i><span data-i18n="ext.meter.out">What the call hears</span></span>
+      </div>
+    </div>
+    <p class="muted" id="managed" data-i18n="ext.managedSome" hidden>Some settings are managed by your organization.</p>
+  </section>
+  </main>
+
+  <footer class="foot">
+    <span class="muted" data-i18n="ext.footer">AI on this device · by tvildo</span>
+    <a href="options.html" target="_blank" data-i18n="ext.settings">Settings</a>
+  </footer>
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

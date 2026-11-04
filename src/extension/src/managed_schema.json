@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "lang": { "title": "Language", "description": "UI language of the popup and options: \"auto\" (the browser's) or a code such as en, ka, es, zh-CN.", "type": "string" },
+    "telemetry": { "title": "Anonymous technical reports", "description": "true turns them on for everyone: your organization's consent on behalf of its users (default: off).", "type": "boolean" },
+    "diagnostics": { "title": "Detailed diagnostics", "description": "Page addresses + a permanent random ID in the reports (default: off). true is your organization's consent on behalf of its users.", "type": "boolean" },
+    "enabled": { "title": "Noise suppression on", "description": "Default for every site.", "type": "boolean" },
+    "lockEnabled": { "title": "Users cannot turn it off", "type": "boolean" },
+    "model": { "title": "Model", "description": "deepfilternet3 = best quality, full band; gtcrn = lightest, wideband; rnnoise = light, full band.", "type": "string" },
+    "strength": { "title": "Strength", "description": "0-100 (100 = full suppression).", "type": "integer", "minimum": 0, "maximum": 100 },
+    "sites": {
+      "title": "Sites",
+      "description": "Per-origin override, e.g. {\"https://teams.microsoft.com\": \"on\", \"https://music.example\": \"off\"}.",
+      "type": "object",
+      "additionalProperties": { "type": "string", "enum": ["on", "off"] }
+    },
+    "onlyListedSites": { "title": "Only the listed sites", "description": "Process audio only on sites set to \"on\".", "type": "boolean" }
+  }
+}

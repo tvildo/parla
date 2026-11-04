@@ -1,0 +1,29 @@
+# Standalone wasm cdylib measuring what vi_otel adds to a module (own workspace, not a member).
+#   cargo build --release --target wasm32-unknown-unknown                    -> baseline (alloc + std only)
+#   cargo build --release --target wasm32-unknown-unknown --features otel    -> + recording + encoding + C ABI
+[package]
+name = "vi_otel_size_probe"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[features]
+otel = ["dep:vi_otel"]
+
+[dependencies]
+vi_otel = { path = "..", features = ["c-abi"], optional = true }
+
+[workspace]
+
+# same knobs as the engine's wasm builds (build.py wasm: opt-level z, no LTO; override via env)
+[profile.release]
+opt-level = "z"
+lto = false
+codegen-units = 1
+panic = "abort"
+debug = false
+strip = true

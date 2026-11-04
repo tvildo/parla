@@ -1,0 +1,15 @@
+{
+  "name": "parla-tests",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Browser tests: the extension (bundled Chromium) and the website's live demo.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "1.64.1",
+    "selenium-webdriver": "^4.51.0"
+  }
+}

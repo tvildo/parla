@@ -1,0 +1,18 @@
+{
+  "name": "parla",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Parla's development tools: TypeScript for the whole tree (python build.py ts).",
+  "type": "module",
+  "scripts": {
+    "check": "tsc -p tsconfig.json --noEmit --emitDeclarationOnly false && tsc -p tsconfig.node.json && tsc -p tests/tsconfig.json",
+    "build": "tsc -p tsconfig.json && node tools/ts_emit.ts"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.3.5",
+    "@types/node": "^24.0.0",
+    "@types/react": "19.3.0",
+    "@types/selenium-webdriver": "4.35.7",
+    "typescript": "7.0.2"
+  }
+}

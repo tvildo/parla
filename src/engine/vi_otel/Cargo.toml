@@ -1,0 +1,24 @@
+[package]
+name = "vi_otel"
+version = "0.1.0"
+edition = "2021"
+description = "Tiny std-only OpenTelemetry-compatible metrics + traces (real-time safe recording, OTLP/HTTP JSON encoding) for native and wasm"
+
+[lib]
+# rlib only: hosts (vi_rs cdylib, size_probe) export the C ABI by enabling `c-abi`.
+crate-type = ["rlib"]
+
+[features]
+default = []
+# C-ABI exports (otel_snapshot_metrics, otel_set_time_ms, ...) for wasm hosts; JS helper: web/otel_export.js
+c-abi = []
+# Minimal HTTP/1.1 POST over std::net::TcpStream (plain http, e.g. a local collector on :4318)
+native-http = []
+# Plain (non-atomic) cells for single-threaded builds. Only sound if the providers are never
+# touched from more than one thread. On wasm32-unknown-unknown without +atomics it changes nothing
+# (atomics already lower to plain loads/stores there).
+single-thread = []
+
+[[example]]
+name = "collector_demo"
+required-features = ["native-http"]

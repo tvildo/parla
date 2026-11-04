@@ -1,0 +1,7 @@
+[package]
+name = "vi_kernels"
+version = "0.1.0"
+edition = "2021"
+description = "SIMD compute kernels for vi_rs (separate crate so it can stay at opt-level 3 while the rest of the wasm is size-optimized)"
+
+[dependencies]

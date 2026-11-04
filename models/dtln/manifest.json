@@ -1,0 +1,44 @@
+{
+ "display_name": "DTLN (16 kHz, 2-stage LSTM, ~1M params)",
+ "license": "MIT (Copyright (c) 2020 Nils L. Westhausen)",
+ "source": "https://github.com/breizhn/DTLN/tree/1de1f15a8b5b7e1c44905618ff2ef70ca8277fbc/pretrained_model (model_1.onnx, model_2.onnx)",
+ "version": "git 1de1f15a8b5b7e1c44905618ff2ef70ca8277fbc (2022-04-26), pretrained_model = DNS-Challenge-trained model (README)",
+ "paper": "Westhausen & Meyer, Dual-Signal Transformation LSTM Network for Real-Time Noise Suppression, Interspeech 2020",
+ "published_metrics": "DNS Challenge 2020 synthetic no_reverb test set: PESQ (P.862) 3.04, SI-SDR 16.34 dB (noisy 2.45 / 9.07); ranked 8th in the DNS Challenge real-time track (README/paper table)",
+ "local_only": false,
+ "sample_rate": 16000,
+ "frame_size": 128,
+ "latency": 384,
+ "notes": "Frames of 512 samples every 128, rfft without window, stage-1 magnitude mask on the complex spectrum, irfft, stage-2 time-domain refinement, overlap-add without window (constants from the published real_time_processing_onnx.py, read only). LSTM states [1,2,128,2] per stage.",
+ "pipeline": {
+  "sample_rate": 16000,
+  "hop": 128,
+  "frames_per_call": 1,
+  "input": "frame",
+  "output": "out_frame",
+  "graph_latency": 0,
+  "front": {
+   "type": "frames",
+   "frame_len": 512,
+   "window": "none"
+  },
+  "back": {
+   "type": "ola",
+   "frame_len": 512,
+   "window": "none"
+  }
+ },
+ "upstream_sha256": {
+  "pretrained_model_model_1.onnx": "22b91cae3855e5a0620e66a917ca6c82c58db0e842c770f58d86751c5e8d4ae3",
+  "pretrained_model_model_2.onnx": "e20c92f9233fccf29cddf86970d0d0161a03aebccc26d6f4d5639c4d5ec2e639"
+ },
+ "name": "dtln",
+ "engine": "graph",
+ "graph": "graph.json",
+ "weights": "weights.bin",
+ "sha256": {
+  "graph.json": "434710df386ae435e35c9ef9bf13bd3d636762292a7ce6fceb8410bc76622b27",
+  "weights.bin": "2b67b7a5f959855fb219bd567fd25256b7979d5415d6e788d0650325afc7d28f"
+ },
+ "package_bytes": 3974228
+}

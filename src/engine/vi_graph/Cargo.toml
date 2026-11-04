@@ -1,0 +1,10 @@
+[package]
+name = "vi_graph"
+version = "0.1.0"
+edition = "2021"
+description = "Plugin `graph`: generic model-package interpreter (operator graph + weights) as a ModelCore"
+
+[dependencies]
+vi_engine = { path = "../vi_engine" }
+vi_audio = { path = "../vi_audio" }
+vi_kernels = { path = "../vi_kernels" }

@@ -1,0 +1,46 @@
+{
+ "display_name": "NSNet2 (Microsoft DNS baseline, 16 kHz, GRU)",
+ "license": "CC BY 4.0 (microsoft/DNS-Challenge; LICENSE). Changed: converted from ONNX to graph.json + weights.bin",
+ "source": "https://github.com/microsoft/DNS-Challenge/blob/a2c7487e12d06d709aeebe5659c21bbf6e1a47aa/NSNet2-baseline/nsnet2-20ms-baseline.onnx",
+ "version": "branch icassp2021-final @ a2c7487e12d06d709aeebe5659c21bbf6e1a47aa (2020-11-11); NSNet2 20 ms baseline",
+ "paper": "Braun, Gamper, Reddy, Tashev, Towards efficient models for real-time deep noise suppression, ICASSP 2021",
+ "published_metrics": "ICASSP 2021 DNS Challenge baseline; DNSMOS/P.808 on the DNS test sets (paper); no VCTK numbers",
+ "local_only": false,
+ "sample_rate": 16000,
+ "frame_size": 160,
+ "latency": 160,
+ "notes": "Published enhancer constants (enhance_onnx.py / featurelib.py, read only): winlen 20 ms, hopfrac 0.5, sqrt(np.hanning(320)) symmetric window, n_fft 320, LogPow feature log10(max(|X|^2,1e-12)), gain clip [-80 dB, 1], istft = windowed irfft overlap-add (no normalization). Whole-sequence ONNX made streaming by exposing both GRU hidden states (400 units each) as state pairs.",
+ "pipeline": {
+  "sample_rate": 16000,
+  "hop": 160,
+  "frames_per_call": 1,
+  "input": "input",
+  "output": "gain",
+  "graph_latency": 0,
+  "front": {
+   "type": "stft",
+   "n_fft": 320,
+   "window": "sqrt_hann_sym",
+   "feature": "log10_power",
+   "log_eps": 1e-12,
+   "log_floor": "max"
+  },
+  "back": {
+   "type": "istft",
+   "source": "mag_mask",
+   "window": "sqrt_hann_sym"
+  }
+ },
+ "upstream_sha256": {
+  "nsnet2-20ms-baseline.onnx": "88429b6253600be840ab816f46f466811d20078142fb12bff8cafe2b27bd4ca9"
+ },
+ "name": "nsnet2",
+ "engine": "graph",
+ "graph": "graph.json",
+ "weights": "weights.bin",
+ "sha256": {
+  "graph.json": "63543704ac1bde03cff857575c80b1249ea633c26fa9fa0af83eba1b369a468c",
+  "weights.bin": "0cecaa6edd3caed8901894629742bf151a85fd2aa424ebd046cb23af91eeb79d"
+ },
+ "package_bytes": 10753068
+}

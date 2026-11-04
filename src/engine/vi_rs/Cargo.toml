@@ -1,0 +1,27 @@
+[package]
+name = "vi_rs"
+version = "0.1.0"
+edition = "2021"
+description = "vi top crate: plugin registry (cargo features), generic C ABI for wasm, manifest loader, vi_cli"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "vi_cli"
+path = "src/bin/vi_cli.rs"
+
+[features]
+# default = the browser bundle (graph + dfn + rnnoise); each plugin is also its own wasm module
+default = ["graph", "rnnoise", "dfn"]
+graph = ["dep:vi_graph"]
+rnnoise = ["dep:vi_rnnoise"]
+dfn = ["dep:vi_dfn"]
+
+[dependencies]
+vi_kernels = { path = "../vi_kernels" }
+vi_audio = { path = "../vi_audio" }
+vi_engine = { path = "../vi_engine" }
+vi_graph = { path = "../vi_graph", optional = true }
+vi_rnnoise = { path = "../vi_rnnoise", optional = true }
+vi_dfn = { path = "../vi_dfn", optional = true }
