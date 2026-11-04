@@ -52,6 +52,6 @@ downloads only the wasm build it can run and the model in use. Without a bundler
 
 ## Docs
 
-Getting started, React, features, assets and CSP, API: <https://github.com/tvildo/parla/tree/main/docs>.
+Getting started, React, features, assets and CSP, API: <https://github.com/tvildo/parla/tree/master/docs>.
 
 Apache-2.0. Model weights keep their own permissive licences (see `NOTICE`). Made by [tvildo](https://github.com/tvildo).
