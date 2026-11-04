@@ -219,6 +219,8 @@ jobs:
     needs: [version, release]
     runs-on: ubuntu-24.04
     environment: stores
+    permissions:
+      id-token: write   # npm trusted publishing: a short-lived OIDC proof for this run, no npm token anywhere
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -227,12 +229,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: https://registry.npmjs.org
-      - name: npm publish @tvildo/parla
+      - name: npm publish @tvildo/parla (trusted publishing, with provenance)
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          TRUSTED: ${{ vars.NPM_TRUSTED_PUBLISHING }}
         run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then echo "::notice::no npm token yet: skipped"; exit 0; fi
-          npm publish tvildo-parla-*.tgz --access public
+          if [ "$TRUSTED" != true ]; then echo "::notice::npm trusted publishing not switched on (repo variable NPM_TRUSTED_PUBLISHING): skipped"; exit 0; fi
+          npm publish tvildo-parla-*.tgz --access public --provenance
 
   telemetry:
     needs: [version, release]

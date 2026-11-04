@@ -63,7 +63,11 @@ and npm steps are skipped (a notice in the run), and the GitHub release still ha
    26 on Linux; the result is byte-identical).
 2. Create API credentials under *Tools → Manage API Keys*: the *JWT issuer* and *JWT secret*.
 
-**npm**: an *automation* access token of the account that owns the `@tvildo` scope.
+**npm**: trusted publishing, no token. On npmjs.com, the package's *Settings → Trusted Publisher → GitHub Actions*:
+user `tvildo`, repository `parla`, workflow `ci.yml`, environment `stores`; and under *Publishing access* "Require
+two-factor authentication and disallow tokens". Then set the repository variable `NPM_TRUSTED_PUBLISHING` to `true`.
+Each release publishes with a signed provenance record (the commit and build it came from). The very first version of
+a package has to be published by hand (`npm publish <file>.tgz --access public` in a terminal, with 2FA).
 
 **GitHub**
 
@@ -74,8 +78,7 @@ and npm steps are skipped (a notice in the run), and the GitHub release still ha
   |---|---|
   | `CWS_EXTENSION_ID`, `CWS_PUBLISHER_ID`, `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN` | Chrome Web Store, Google Cloud |
   | `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Firefox Add-ons API key |
-  | `NPM_TOKEN` | npm |
-
+  
 - *New environment* `telemetry` (optional: the report receiver is deployed with every release): secrets
   `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit, Workers Custom Domains: Edit, Zone: Read) and
   `CLOUDFLARE_ACCOUNT_ID`; variables `TELEMETRY_SAMPLE` (default 1) and `TELEMETRY_DAILY_LIMIT` (default 80000).
