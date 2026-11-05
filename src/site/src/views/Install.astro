@@ -1,0 +1,47 @@
+---
+// How to install the extension, per browser. Until the stores list Parla, the downloads are the current release's
+// files on GitHub (their names carry the version: build.py passes it as PARLA_VERSION).
+import Base from "../layouts/Base.astro";
+import { seg, translator } from "../i18n";
+
+interface Props { lang: string }
+const { lang } = Astro.props;
+const t = translator(lang);
+const here = `/${seg(lang)}`;
+const REPO = "https://github.com/tvildo/parla";
+const version = process.env.PARLA_VERSION || "";
+// a source build (0.x of the source manifest, no release behind it) links the releases page instead
+const file = (browser: string) => `parla-${browser}-v${version}.zip`;
+const download = (browser: string) => (version ? `${REPO}/releases/download/v${version}/${file(browser)}` : `${REPO}/releases/latest`);
+const code = (s: string) => `<code>${s}</code>`;
+const browsers = [
+  { id: "chrome", name: "Chrome · Edge · Brave · Opera", steps: t("install.chrome", { ext: code("chrome://extensions"), edge: code("edge://extensions") }), store: t("site.install.chrome") },
+  { id: "firefox", name: "Firefox", steps: t("install.firefox", { url: code("about:debugging") }), store: t("site.install.firefox") },
+];
+---
+<Base lang={lang} page="install/" title={t("install.title")} description={t("install.description")}>
+  <main class="install">
+    <h1>{t("install.title")}</h1>
+    <p class="lead">{t("install.lead")}</p>
+    {version && <p class="note version"><a href={`${REPO}/releases/tag/v${version}`}>{t("install.version", { version: `v${version}` })}</a></p>}
+
+    {browsers.map((b) => (
+      <section class="card browser" id={b.id}>
+        <h2>{b.name}</h2>
+        <p set:html={b.steps} />
+        <div class="actions start">
+          <a class="btn primary" href={download(b.id)} download>{t("install.download", { file: version ? file(b.id) : "" }).trim()}</a>
+          <span class="btn" aria-disabled="true">{b.store}</span>
+        </div>
+      </section>
+    ))}
+
+    <section class="card browser" id="safari">
+      <h2>Safari · Mac · iPhone · iPad</h2>
+      <p>{t("install.safari")}</p>
+    </section>
+
+    <p>{t("install.after")}</p>
+    <p class="note"><a href={`${REPO}/releases`}>{t("install.releases")}</a> · <a href={`${here}privacy/`}>{t("site.nav.privacy")}</a></p>
+  </main>
+</Base>

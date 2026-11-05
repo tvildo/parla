@@ -47,9 +47,11 @@ Free · Open source · No account · No sign-up
 
 ## Install
 
-Parla for **Chrome, Edge and Firefox** is on its way to the Chrome Web Store and Firefox Add-ons.
+Parla for **Chrome, Edge, Firefox and Safari** is on its way to the Chrome Web Store, Firefox Add-ons and the App Store
+(Safari on macOS, iPhone and iPad).
 
-Until then, download it from the [latest release](https://github.com/tvildo/parla/releases/latest)
+Until then, follow **[parla.cc/install](https://parla.cc/install/)** (a minute per browser), or download it from the
+[latest release](https://github.com/tvildo/parla/releases/latest)
 (`parla-chrome-….zip` or `parla-firefox-….zip`) and load it yourself: see
 [installing the extension](docs/extension.md#install). Want to hear it first? The
 **[live demo](https://parla.cc/demo/)** runs right in your browser, nothing to install.

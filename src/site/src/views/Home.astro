@@ -7,6 +7,7 @@ const { lang } = Astro.props;
 const t = translator(lang);
 const here = `/${seg(lang)}`;
 const cards = ["ai", "any", "quality", "safe"];
+const version = process.env.PARLA_VERSION || "";   // the release this site was built with (build.py site)
 const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack huddles", t("site.how.anyApp")];
 ---
 <Base lang={lang} page="" title={t("site.title")} description={t("site.description")}>
@@ -17,11 +18,35 @@ const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack 
       <p class="lead">{t("site.lead")}</p>
       <div class="actions">
         <a class="btn primary" href={`${here}demo/`}>{t("site.ctaTry")}</a>
-        <a class="btn" href={`${here}#install`}>{t("site.ctaGet")}</a>
+        <a class="btn" href={`${here}install/`}>{t("site.ctaGet")}</a>
       </div>
       <p class="note">{t("site.note")}</p>
       <div class="wave" aria-hidden="true">{Array.from({ length: 21 }, (_, i) => <i style={`animation-delay:${(Math.sin(i / 3) * 0.6 + i * 0.06).toFixed(2)}s`}></i>)}</div>
     </div>
+
+    <section id="video">
+      <h2>{t("site.video.title")}</h2>
+      <!-- privacy: the poster is ours; YouTube (privacy-enhanced mode) loads only when the visitor clicks play -->
+      <div class="video" data-id="w93ifLz7To0">
+        <button type="button" class="video-play" aria-label={t("site.video.play")}>
+          <img src="/video-poster.jpg" width="1280" height="720" alt="" loading="lazy" decoding="async" />
+          <span class="video-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+      <p class="note">{t("site.video.play")}</p>
+    </section>
+    <script is:inline>
+      document.querySelectorAll(".video").forEach((v) => {
+        v.querySelector("button").addEventListener("click", () => {
+          const f = document.createElement("iframe");
+          f.src = `https://www.youtube-nocookie.com/embed/${v.dataset.id}?autoplay=1&rel=0`;
+          f.title = "Parla";
+          f.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+          f.referrerPolicy = "strict-origin-when-cross-origin";
+          v.replaceChildren(f);
+        }, { once: true });
+      });
+    </script>
 
     <section id="how">
       <h2>{t("site.how.title")}</h2>
@@ -50,10 +75,9 @@ const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack 
       <h2>{t("site.install.title")}</h2>
       <p class="sub">{t("site.install.sub")}</p>
       <div class="actions start">
-        <span class="btn primary" aria-disabled="true">{t("site.install.chrome")}</span>
-        <span class="btn" aria-disabled="true">{t("site.install.firefox")}</span>
-        <a class="btn" href="https://github.com/tvildo/parla/blob/master/docs/extension.md#install">{t("site.install.build")}</a>
+        <a class="btn primary" href={`${here}install/`}>{t("site.install.go")}</a>
       </div>
+      {version && <p class="note"><a href={`https://github.com/tvildo/parla/releases/tag/v${version}`}>{t("install.version", { version: `v${version}` })}</a></p>}
     </section>
 
     <section id="open">

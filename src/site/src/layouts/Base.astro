@@ -4,7 +4,7 @@
 import "../styles/site.css";
 import { LANGS, DEFAULT, seg, translator } from "../i18n";
 
-interface Props { lang: string; page: "" | "privacy/" | "demo/"; title: string; description: string }
+interface Props { lang: string; page: "" | "privacy/" | "demo/" | "install/"; title: string; description: string }
 const { lang, page, title, description } = Astro.props;
 const t = translator(lang);
 const here = `/${seg(lang)}`;
@@ -30,6 +30,7 @@ const [madeA, madeB] = t("site.footer.made").split("{author}");
     <nav class="nav-links" aria-label="Main">
       <a href={`${here}demo/`}>{t("site.nav.try")}</a>
       <a href={`${here}#how`}>{t("site.nav.how")}</a>
+      <a href={`${here}install/`}>{t("site.nav.install")}</a>
       <a href={`${here}privacy/`}>{t("site.nav.privacy")}</a>
       <a href="https://github.com/tvildo/parla/tree/master/docs">{t("site.nav.docs")}</a>
       <a href="https://github.com/tvildo/parla">{t("site.nav.source")}</a>

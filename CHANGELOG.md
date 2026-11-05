@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Website: an **install page** (parla.cc/install) with direct downloads of the current release for Chrome / Edge and
+  Firefox, the steps for each browser and the latest version number; the home page's install button and the menu point
+  to it. The promo video is on the home page: our own poster, and YouTube (privacy-enhanced mode) loads only when the
+  visitor clicks play (the privacy page says so).
+- Parla for Safari (macOS, iPhone, iPad; Safari 18+): the same extension inside a small app, built with
+  `python build.py safari` on a Mac (src/extension/safari).
 - The report receiver can be deployed from this repository (`python build.py telemetry-deploy`, or with every
   release), so the whole service is open source, not just its code.
 - Releases: `development` is built and tested on every push; every merge into `master` becomes the next semantic
