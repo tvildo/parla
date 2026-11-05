@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
   site: 'https://parla.cc',
   trailingSlash: 'always',
-  build: { format: 'directory' },
+  // the CSS is small: inlined, so no request blocks the first paint
+  build: { format: 'directory', inlineStylesheets: 'always' },
   integrations: [react()],
   vite: {
     server: { fs: { allow: [fileURLToPath(new URL('../..', import.meta.url))] } },

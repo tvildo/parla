@@ -1,5 +1,6 @@
 // Screenshots for the README, the docs and the website, taken from the real builds (python build.py screenshots ->
-// SCREENSHOTS=1 npx playwright test --project screenshots). Writes docs/images/*.png and src/site/public/screenshots/.
+// SCREENSHOTS=1 npx playwright test --project screenshots). Writes docs/images/*.png and, for the website (it
+// makes AVIF / WebP in the sizes it needs from them), src/site/src/assets/screenshots/ (popup and demo).
 //   extension-popup.png     the popup while a (generic, made-up) meeting page uses the microphone: the noise meter
 //                           live (the fake microphone is background noise: its bar full, the call's nearly empty)
 //   extension-settings.png  the settings page (Settings tab)
@@ -12,9 +13,12 @@ import path from 'node:path';
 import { ROOT, fakeMic } from './lib';
 
 const EXT = path.join(ROOT, 'build', 'extension');
-const OUT = [path.join(ROOT, 'docs', 'images'), path.join(ROOT, 'src', 'site', 'public', 'screenshots')];
+const DOCS = path.join(ROOT, 'docs', 'images');
+const SITE_SHOTS = path.join(ROOT, 'src', 'site', 'src', 'assets', 'screenshots');
 const SITE = 'http://127.0.0.1:8799';
-const save = (name: string, png: Buffer) => { for (const d of OUT) { fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(path.join(d, name), png); } };
+const save = (name: string, png: Buffer) => {
+  for (const d of name === 'extension-settings.png' ? [DOCS] : [DOCS, SITE_SHOTS]) { fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(path.join(d, name), png); }
+};
 
 // a neutral meeting page: the extension wraps its microphone like any calling app's
 const MEETING = `<!doctype html><html><head><title>Weekly sync</title><style>

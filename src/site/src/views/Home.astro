@@ -1,5 +1,9 @@
 ---
+import { Picture } from "astro:assets";
 import Base from "../layouts/Base.astro";
+import poster from "../assets/video-poster.jpg";
+import shotPopup from "../assets/screenshots/extension-popup.png";
+import shotDemo from "../assets/screenshots/demo.png";
 import { seg, translator } from "../i18n";
 
 interface Props { lang: string }
@@ -29,7 +33,7 @@ const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack 
       <!-- privacy: the poster is ours; YouTube (privacy-enhanced mode) loads only when the visitor clicks play -->
       <div class="video" data-id="w93ifLz7To0">
         <button type="button" class="video-play" aria-label={t("site.video.play")}>
-          <img src="/video-poster.jpg" width="1280" height="720" alt="" loading="lazy" decoding="async" />
+          <Picture src={poster} formats={["avif", "webp"]} widths={[440, 880, 1280]} sizes="(max-width: 928px) calc(100vw - 48px), 880px" alt="" loading="lazy" decoding="async" />
           <span class="video-icon" aria-hidden="true"></span>
         </button>
       </div>
@@ -61,11 +65,11 @@ const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack 
       <h2>{t("site.shots.title")}</h2>
       <div class="shots">
         <figure class="shot shot-popup">
-          <img src="/screenshots/extension-popup.png" width="340" height="415" alt={t("site.shots.popup")} loading="lazy" decoding="async" />
+          <Picture src={shotPopup} formats={["avif", "webp"]} widths={[340, 680]} sizes="340px" alt={t("site.shots.popup")} loading="lazy" decoding="async" />
           <figcaption>{t("site.shots.popup")}</figcaption>
         </figure>
         <figure class="shot">
-          <img src="/screenshots/demo.png" width="720" height="650" alt={t("site.shots.demo")} loading="lazy" decoding="async" />
+          <Picture src={shotDemo} formats={["avif", "webp"]} widths={[564, 1128, 1600]} sizes="(max-width: 760px) calc(100vw - 48px), 564px" alt={t("site.shots.demo")} loading="lazy" decoding="async" />
           <figcaption>{t("site.shots.demo")}</figcaption>
         </figure>
       </div>

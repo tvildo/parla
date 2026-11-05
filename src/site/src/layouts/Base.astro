@@ -35,7 +35,7 @@ const [madeA, madeB] = t("site.footer.made").split("{author}");
       <a href="https://github.com/tvildo/parla/tree/master/docs">{t("site.nav.docs")}</a>
       <a href="https://github.com/tvildo/parla">{t("site.nav.source")}</a>
       <details class="langs">
-        <summary aria-label={t("site.nav.language")}>{LANGS.find((l) => l.code === lang)?.name}</summary>
+        <summary aria-label={`${t("site.nav.language")}: ${LANGS.find((l) => l.code === lang)?.name}`}>{LANGS.find((l) => l.code === lang)?.name}</summary>
         <ul>
           {LANGS.map((l) => <li><a href={href(l.code)} hreflang={l.code} lang={l.code} aria-current={l.code === lang ? "true" : undefined}>{l.name}</a></li>)}
         </ul>
