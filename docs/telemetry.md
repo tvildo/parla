@@ -84,4 +84,4 @@ python build.py telemetry-deploy [--sample 0..1] [--daily-limit N] [--log-sampli
 
 `--sample` is the share of installs that report (`0` = off for everyone), `--daily-limit` the events accepted per UTC
 day. A fork that runs its own receiver also points its extension at it (`src/extension/src/telemetry.ts`). The
-release workflow can deploy it on every release ([releasing](releasing.md)).
+release workflow deploys it on every merge into `master` ([releasing](releasing.md)).

@@ -59,6 +59,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   by tvildo.
 
 ### Changed
+- Releases: the extension, the SDK and the npm package get a new version only when something they ship changed; a
+  change to the website alone (or docs, tests, CI) deploys the website and releases nothing else
+  (docs/releasing.md).
+- Website loads faster: the home page's pictures come as AVIF / WebP in the size the screen needs (about 80 KB instead
+  of 420 KB), the styles are inside each page (no extra request before the first paint), and the language menu's
+  accessible name includes the current language.
 - Built with Rust 1.99 (engine files ~4 % smaller, model outputs byte-identical) and Node 26; website image on
   nginx 1.31.8, tests on Playwright 1.64.1. CI now also builds and checks the website image.
 - Build and release pipeline hardened against supply-chain attacks: everything pinned (actions by commit, Node,

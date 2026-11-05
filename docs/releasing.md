@@ -5,24 +5,39 @@ Two branches:
 | Branch | What happens on a push (the workflow [.github/workflows/ci.yml](../.github/workflows/ci.yml)) |
 |---|---|
 | `development` | Everyday work. Everything is built and tested (type-check, engine, extension for Chrome and Firefox, npm package, SDK files, browser tests, and the website image, started and checked). The files are attached to the run as the `parla` artifact. Nothing is tagged or published. Pull requests get the same. |
-| `master` | Releases. A merge into `master` builds and tests the same way, then creates the next version tag, a GitHub release with the files to download, publishes the extension to the Chrome Web Store and Firefox Add-ons and the package to npm, deploys the report receiver to Cloudflare, and the website to GitHub Pages (parla.cc). |
+| `master` | Releases. A merge into `master` builds and tests the same way. If something the extension, the SDK or the npm package ships changed, it creates the next version tag, a GitHub release with the files to download, and publishes the extension to the Chrome Web Store and Firefox Add-ons and the package to npm. Every merge deploys the website to GitHub Pages (parla.cc) and the report receiver to Cloudflare. |
+
+**Two release streams.** The extension, the SDK and the npm package share one version (`vX.Y.Z`): they are the same
+engine, and a new version is released only when something they ship changed. The website has no version: every merge
+into `master` deploys it, and its install page offers the latest release. A merge that changes only the website (or
+the docs, tests or CI) deploys the website and releases nothing else.
 
 ## The version
 
-Semantic versioning, from the commit messages since the last tag ([conventional commits](https://www.conventionalcommits.org/)):
+Semantic versioning, from the messages of the commits since the last tag that change something the extension, the
+SDK or the npm package ships ([conventional commits](https://www.conventionalcommits.org/)). A commit doesn't count when
+it changes only website-only paths: `src/site/`, `src/telemetry/` (the report receiver), `Dockerfile` (the website
+image), `docs/`, any `*.md`, `tests/`, `examples/`, `.github/`, the release tools; nor when its only change to
+`src/i18n` is website text (keys other than `ext.*`); nor `docs:`, `ci:`, `test:` and `style:` commits, whatever they
+touch (a comment in `build.py`, say). Anything else counts, so a new kind of file errs on the side of a
+release. Merge commits don't count (their changes are in the commits they merge). No commit counts: no release.
 
 | Commits since the last release | Next version (from 0.4.2) |
 |---|---|
 | any `feat!:` / `fix!:` (a `!`), or a line `BREAKING CHANGE: …` | **1.0.0** (major) |
 | any `feat: …` / `feat(popup): …` | **0.5.0** (minor) |
-| anything else (`fix:`, `docs:`, `chore:`, merges, …) | **0.4.3** (patch) |
+| anything else (`fix:`, `chore:`, …) | **0.4.3** (patch) |
 
-The first release takes the version in `src/extension/src/manifest.json` (0.1.0). A manual run of the workflow on
-`master` (*Actions → Build and release → Run workflow*) can force `patch`, `minor` or `major`. Locally:
-`node tools/next_version.ts` prints what the next release would be.
+So a `feat:` for the website alone doesn't make the extension's next version a minor one. The first release takes
+the version in `src/extension/src/manifest.json` (0.1.0). A manual run of the workflow on `master` (*Actions → Build
+and release → Run workflow*) can force `patch`, `minor` or `major`, which also forces a release when only the website
+changed. Locally: `node tools/next_version.ts` prints what the next release would be and lists each commit since the
+last tag as `release` or `site`.
 
 The version is stamped into the builds, not committed: the extension's manifest, the npm package's `package.json` and
-the SDK's `VERSION` all carry it, so the files in the repository keep the last hand-set number.
+the SDK's `VERSION` all carry it, so the files in the repository keep the last hand-set number. A merge without a
+release stamps the last release's version (the website's install page links that release's files); the website is
+deployed only after the release job, so it never links files that don't exist yet.
 
 ## What a release contains
 

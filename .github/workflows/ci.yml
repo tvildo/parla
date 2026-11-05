@@ -1,10 +1,13 @@
 # Build and release (docs/releasing.md).
 #   - every push to `development` / `master` and every pull request: build everything; the files are the run's artifact
-#   - a push (merge) to `master`: the next semantic version from the commits since the last tag (feat -> minor,
-#     fix / other -> patch, `!` or BREAKING CHANGE -> major), stamped into every build, then a GitHub release
-#     `vX.Y.Z` (the tag) with the files to download, and the extension to the Chrome Web Store and Firefox Add-ons,
-#     the package to npm, the report receiver to Cloudflare (each skipped while its secrets are missing), and the
-#     website to GitHub Pages (parla.cc)
+#   - a push (merge) to `master`:
+#     - when something the extension / SDK / npm package ships changed since the last tag (tools/next_version.ts):
+#       the next semantic version from those commits (feat -> minor, fix / other -> patch, `!` or BREAKING CHANGE
+#       -> major), stamped into every build, then a GitHub release `vX.Y.Z` (the tag) with the files to download,
+#       and the extension to the Chrome Web Store and Firefox Add-ons and the package to npm (each skipped while its
+#       secrets are missing)
+#     - always: the website to GitHub Pages (parla.cc; it offers the latest release for download) and the report
+#       receiver to Cloudflare. A merge that changes only the website (or docs, tests, CI) releases nothing else.
 # Supply chain: actions pinned by commit SHA, exact Node / Rust / binaryen versions (binaryen checked by SHA-256),
 # npm installs only from lockfiles with install scripts off (.npmrc) and registry signatures verified, the release
 # tools from tools/release/package-lock.json, no token left in .git (persist-credentials: false). Dependabot keeps
@@ -42,7 +45,9 @@ jobs:
     outputs:
       version: ${{ steps.next.outputs.version }}
       tag: ${{ steps.next.outputs.tag }}
+      current: ${{ steps.next.outputs.current }}
       release: ${{ steps.next.outputs.release }}
+      deploy: ${{ steps.next.outputs.deploy }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -56,10 +61,13 @@ jobs:
         env:
           BUMP: ${{ inputs.bump || 'auto' }}
         run: |
-          node tools/next_version.ts --bump "$BUMP" | tee -a "$GITHUB_OUTPUT"
-          if [ "$GITHUB_EVENT_NAME" != pull_request ] && [ "$GITHUB_REF" = refs/heads/master ] && grep -q '^version=.' "$GITHUB_OUTPUT"; then
-            echo "release=true" >> "$GITHUB_OUTPUT"
+          next=$(node tools/next_version.ts --bump "$BUMP")
+          echo "$next" | tee -a "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" != pull_request ] && [ "$GITHUB_REF" = refs/heads/master ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            if echo "$next" | grep -q '^version=.'; then echo "release=true" >> "$GITHUB_OUTPUT"; else echo "release=false" >> "$GITHUB_OUTPUT"; fi
           else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
             echo "release=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -67,8 +75,9 @@ jobs:
     needs: version
     runs-on: ubuntu-24.04
     env:
-      # a release build carries the release version everywhere; other builds keep the source's
-      VERSION_ARG: ${{ needs.version.outputs.release == 'true' && format('--version {0}', needs.version.outputs.version) || '' }}
+      # on master the builds carry the current release's version (the new one, or the last one when only the website
+      # changed: the website's install page links that release's files); other builds keep the source's
+      VERSION_ARG: ${{ needs.version.outputs.deploy == 'true' && format('--version {0}', needs.version.outputs.current) || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -125,8 +134,8 @@ jobs:
           curl -fsS -o /dev/null http://127.0.0.1:8080/ && curl -fsS -o /dev/null http://127.0.0.1:8080/demo/
           docker rm -f parla-site
 
-      - name: Website for GitHub Pages (releases only)
-        if: needs.version.outputs.release == 'true'
+      - name: Website for GitHub Pages (every merge into master)
+        if: needs.version.outputs.deploy == 'true'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: build/site
@@ -237,7 +246,8 @@ jobs:
           npm publish tvildo-parla-*.tgz --access public --provenance
 
   telemetry:
-    needs: [version, release]
+    needs: [version, build]
+    if: needs.version.outputs.deploy == 'true'
     runs-on: ubuntu-24.04
     environment: telemetry
     steps:
@@ -261,7 +271,9 @@ jobs:
           python3 build.py telemetry-deploy --sample "$SAMPLE" --daily-limit "$DAILY_LIMIT"
 
   pages:
-    needs: [version, release]
+    # after the release (if there is one), so the install page never links files that don't exist yet
+    needs: [version, build, release]
+    if: ${{ !cancelled() && needs.build.result == 'success' && needs.version.outputs.deploy == 'true' && contains(fromJSON('["success", "skipped"]'), needs.release.result) }}
     runs-on: ubuntu-24.04
     permissions:
       pages: write
