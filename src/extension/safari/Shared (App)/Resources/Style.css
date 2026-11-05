@@ -1,0 +1,69 @@
+* {
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    cursor: default;
+}
+
+:root {
+    color-scheme: light dark;
+
+    --spacing: 20px;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    gap: var(--spacing);
+    margin: 0 calc(var(--spacing) * 2);
+    height: 100%;
+
+    font: -apple-system-short-body;
+    text-align: center;
+}
+
+body:not(.platform-mac, .platform-ios) :is(.platform-mac, .platform-ios) {
+    display: none;
+}
+
+body.platform-ios .platform-mac {
+    display: none;
+}
+
+body.platform-mac .platform-ios {
+    display: none;
+}
+
+body.platform-ios .platform-mac {
+    display: none;
+}
+
+body:not(.state-on, .state-off) :is(.state-on, .state-off) {
+    display: none;
+}
+
+body.state-on :is(.state-off, .state-unknown) {
+    display: none;
+}
+
+body.state-off :is(.state-on, .state-unknown) {
+    display: none;
+}
+
+button {
+    font-size: 1em;
+}
+
+/* Parla: the website's palette (parla.cc) */
+:root { color-scheme: dark; }
+body { background: radial-gradient(900px 600px at 80% 0%, #2a1f5a 0%, transparent 60%), #0c0c14; color: #f4f4f8; }
+h1 { margin: 0; font: 700 28px -apple-system, system-ui, sans-serif; }
+p { max-width: 34em; color: #b8b8cc; }
+p.lead { color: #d6d6e4; }
+button { font: inherit; padding: 10px 18px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(90deg, #7c7cff, #b36bff); }

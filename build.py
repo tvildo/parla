@@ -7,6 +7,7 @@
     python build.py ts                                          the TypeScript for browsers -> build/js/ (tsc)
     python build.py check                                       type-check everything (browser code, scripts, tests)
     python build.py extension [--zip]                           the browser extension -> build/extension/
+    python build.py safari [--version X.Y.Z] [--ios]            the Safari app (macOS + Xcode) -> build/safari/
     python build.py sdk                                         the SDK as files for an app -> build/sdk/
     python build.py npm                                         the npm package @tvildo/parla -> build/npm/ + .tgz
     python build.py examples                                    build examples/ (react-vite, vanilla) on the package
@@ -226,6 +227,45 @@ def cmd_extension(args: list[str]) -> None:
     run(["node", str(ROOT / "src" / "extension" / "build.ts"), *args])
 
 
+SAFARI = ROOT / "src" / "extension" / "safari"
+
+
+def safari_check() -> None:
+    """The Xcode project lists the extension's top-level files one by one (src/extension/safari): a file the
+    extension gained but the project doesn't list would silently be missing from the app."""
+    pbx = (SAFARI / "Parla.xcodeproj" / "project.pbxproj").read_text(encoding="utf-8")
+    listed = set(re.findall(r'path = "\.\./\.\./\.\./\.\./build/extension-safari/([^"/]+)"', pbx))
+    built = {p.name for p in (BUILD / "extension-safari").iterdir()}
+    if listed != built:
+        raise SystemExit("error: the Safari Xcode project and build/extension-safari differ: "
+                         f"not in the project {sorted(built - listed)}, missing from the build {sorted(listed - built)}. "
+                         "Add / remove them in Xcode (Shared (Extension) > Resources, both extension targets): "
+                         "src/extension/safari/README.md")
+
+
+def cmd_safari(args: list[str]) -> None:
+    """build/extension-safari, then (on macOS with Xcode) the app that carries it: build/safari/. Signing: with
+    PARLA_APPLE_TEAM (a team ID) Xcode signs with that team; without it the app is signed to run locally only
+    (Safari: Develop > Allow Unsigned Extensions)."""
+    version = args[args.index("--version") + 1] if "--version" in args else None
+    cmd_extension(["--browser", "safari", *(["--version", version] if version else [])])
+    safari_check()
+    if sys.platform != "darwin" or not shutil.which("xcodebuild"):
+        print("safari: build/extension-safari is ready; the app itself is built on a Mac with Xcode (python build.py safari)")
+        return
+    version = version or json.loads((BUILD / "extension-safari" / "manifest.json").read_text(encoding="utf-8"))["version"]
+    major, minor, patch = (int(x) for x in version.split("."))
+    common = [f"MARKETING_VERSION={version}", f"CURRENT_PROJECT_VERSION={major * 10000 + minor * 100 + patch}"]
+    team = os.environ.get("PARLA_APPLE_TEAM")
+    common += ([f"DEVELOPMENT_TEAM={team}", "CODE_SIGN_STYLE=Automatic", "-allowProvisioningUpdates"] if team
+               else ["CODE_SIGN_IDENTITY=-", "CODE_SIGN_STYLE=Manual", "DEVELOPMENT_TEAM="])
+    targets = [("Parla (macOS)", "platform=macOS")] + ([("Parla (iOS)", "generic/platform=iOS Simulator")] if "--ios" in args else [])
+    for scheme, dest in targets:
+        run(["xcodebuild", "-project", str(SAFARI / "Parla.xcodeproj"), "-scheme", scheme, "-configuration", "Release",
+             "-destination", dest, "-derivedDataPath", str(BUILD / "safari"), "-quiet", *common, "build"])
+    print(f"safari -> {BUILD / 'safari' / 'Build' / 'Products'} (Parla {version})")
+
+
 def cmd_sdk(args: list[str]) -> None:
     cmd_ts([])
     run(["node", str(ROOT / "src" / "sdk" / "build.ts"), *args])
@@ -282,7 +322,10 @@ def cmd_site(args: list[str]) -> None:
         run([npm(), "ci"], cwd=site)
     if out.exists():
         shutil.rmtree(out)
-    run([npm(), "run", "build"], cwd=site)
+    # the install page links the release's files by name (parla-chrome-v<version>.zip): the version the npm package was
+    # built with (CI builds it with the release version first)
+    version = json.loads((BUILD / "npm" / "package.json").read_text(encoding="utf-8"))["version"]
+    run([npm(), "run", "build"], cwd=site, env={"PARLA_VERSION": version})
     shutil.copytree(site / "dist", out, dirs_exist_ok=True)
     # the licences of what the site serves: Parla's NOTICE + the demo's model packages (the npm package's models)
     shipped = sorted(p.name for p in (BUILD / "npm" / "dist" / "models").iterdir() if p.is_dir())
@@ -464,7 +507,7 @@ def cmd_telemetry_deploy(args: list[str]) -> None:
 
 
 
-COMMANDS = {"wasm": cmd_wasm, "native": cmd_native, "regress": cmd_regress, "ts": cmd_ts, "check": cmd_check, "extension": cmd_extension,
+COMMANDS = {"wasm": cmd_wasm, "native": cmd_native, "regress": cmd_regress, "ts": cmd_ts, "check": cmd_check, "extension": cmd_extension, "safari": cmd_safari,
             "sdk": cmd_sdk, "npm": cmd_npm, "examples": cmd_examples, "screenshots": cmd_screenshots, "site": cmd_site, "serve": cmd_serve, "test": cmd_test,
             "telemetry-deploy": cmd_telemetry_deploy}
 

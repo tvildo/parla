@@ -3,6 +3,8 @@
 //   node src/extension/build.ts [--out build/extension] [--wasm build/wasm] [--models deepfilternet3,gtcrn,rnnoise]
 //                            [--zip]   (also writes build/extension.zip for the stores)
 //                            [--browser firefox]   (-> build/extension-firefox: Firefox 140+ manifest)
+//                            [--browser safari]    (-> build/extension-safari: the web extension inside the Safari app,
+//                                                   src/extension/safari; see its README)
 //                            [--version X.Y.Z]   (the release version in the built manifest; CI passes the next tag)
 //
 // Contents: src/extension/src/* (pages, styles, manifest; the scripts as emitted JavaScript from build/js/, so run
@@ -23,8 +25,8 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const args = process.argv.slice(2);
 const arg = (n: string, d: string) => { const i = args.indexOf(`--${n}`); return i >= 0 ? args[i + 1] : d; };
 const BROWSER = arg('browser', 'chrome');
-if (!['chrome', 'firefox'].includes(BROWSER)) throw new Error(`--browser chrome|firefox, not ${BROWSER}`);
-const OUT = path.resolve(REPO, arg('out', BROWSER === 'firefox' ? 'build/extension-firefox' : 'build/extension'));
+if (!['chrome', 'firefox', 'safari'].includes(BROWSER)) throw new Error(`--browser chrome|firefox|safari, not ${BROWSER}`);
+const OUT = path.resolve(REPO, arg('out', BROWSER === 'chrome' ? 'build/extension' : `build/extension-${BROWSER}`));
 const WASM = path.resolve(REPO, arg('wasm', 'build/wasm'));
 const MODELS = arg('models', 'deepfilternet3,gtcrn,rnnoise').split(',').filter(Boolean);
 
@@ -86,6 +88,17 @@ if (BROWSER === 'firefox') {
     gecko_android: { strict_min_version: '142.0' },
   };
   m.developer = { name: 'tvildo', url: 'https://github.com/tvildo' };
+  fs.writeFileSync(mf, JSON.stringify(m, null, 2) + '\n');
+}
+if (BROWSER === 'safari') {
+  // Safari web extension (MV3, inside a small app: src/extension/safari): no Chrome-only keys; the minimum version is
+  // the first Safari with MAIN-world content scripts at document_start (the getUserMedia wrapper needs them)
+  const mf = path.join(OUT, 'manifest.json');
+  const m = JSON.parse(fs.readFileSync(mf, 'utf8'));
+  delete m.minimum_chrome_version;
+  delete m.storage;   // managed_schema is Chrome's
+  for (const w of m.web_accessible_resources) delete w.use_dynamic_url;
+  m.browser_specific_settings = { safari: { strict_min_version: '18.0' } };
   fs.writeFileSync(mf, JSON.stringify(m, null, 2) + '\n');
 }
 // Version and commit: --version X.Y.Z (CI: the next semantic tag, docs/releasing.md; default: the source manifest's) and

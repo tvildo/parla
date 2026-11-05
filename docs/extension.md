@@ -1,6 +1,6 @@
 # The browser extension
 
-Parla for Chrome, Edge and Firefox (140+) cleans the microphone in every web calling app — Google Meet, Microsoft
+Parla for Chrome, Edge, Firefox (140+) and Safari (18+, macOS / iOS / iPadOS) cleans the microphone in every web calling app — Google Meet, Microsoft
 Teams, Zoom (web), Discord, Slack and any other site that uses the microphone — without changes to the app.
 
 ## Install
@@ -13,6 +13,8 @@ Until it is in the Chrome Web Store and Firefox Add-ons, download `parla-chrome-
   unzipped folder.
 - **Firefox**: open `about:debugging`, click *This Firefox* → *Load Temporary Add-on* and choose `manifest.json` in
   the unzipped folder (it stays until Firefox restarts, until the add-on is signed).
+- **Safari**: Safari extensions come inside an app. Until Parla is in the App Store, build it on a Mac with Xcode:
+  `python build.py safari`, then see [src/extension/safari](../src/extension/safari/README.md).
 
 ## Using it
 

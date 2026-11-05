@@ -41,6 +41,16 @@ python build.py test                                         # browser tests in 
 cd tests && node firefox.ts [--headless]                    # the Firefox build in this machine's Firefox (Selenium); `python build.py test` runs it in Docker too (Firefox 158, PulseAudio null sink)
 ```
 
+**Safari** (since 2026-11-05): `python build.py safari` = `build.ts --browser safari` (`build/extension-safari`: no
+`minimum_chrome_version` / `storage` / `use_dynamic_url`, `browser_specific_settings.safari.strict_min_version` 18.0)
++ on a Mac the wrapper app `src/extension/safari` (Xcode project from `safari-web-extension-converter`, references the
+build's top-level files one by one; `build.py` fails when they drift; README there). Safari 27.2 (macOS 27.2):
+MAIN-world content scripts at document_start work despite the converter's "world not supported" warning; page mode,
+DFN3. Safari lacks `runtime.onUpdateAvailable` and `storage.managed`: background.ts must feature-check every
+Chrome-only API (an unguarded one throws and the whole background stops). Safari asks for the microphone per site and
+the page waits until the user answers. Checking a page from Windows: Safari > Develop > "Allow JavaScript from Apple
+Events", then `osascript -e 'tell application "Safari" to do JavaScript "..." in current tab of front window'` over ssh.
+
 **Firefox**: one source tree; `build.ts --browser firefox` rewrites the manifest: `background.scripts` (Firefox MV3
 has no background service worker; the same module runs as an event page), `browser_specific_settings.gecko` (id
 `parla@parla.cc`, min 140 / `gecko_android` min 142: the first versions with `data_collection_permissions` (AMO warns

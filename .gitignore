@@ -10,3 +10,8 @@ tests/playwright-report/
 src/site/.astro/
 src/site/dist/
 examples/*/dist/
+
+# Xcode per-user state (src/extension/safari)
+xcuserdata/
+*.xcuserstate
+.DS_Store

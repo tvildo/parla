@@ -1,0 +1,1067 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 110;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E6FC53BF309BEF86006CC8B1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FC53BE309BEF86006CC8B1 /* AppDelegate.swift */; };
+		E6FC53C1309BEF86006CC8B1 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FC53C0309BEF86006CC8B1 /* SceneDelegate.swift */; };
+		E6FC53C4309BEF86006CC8B1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53C2309BEF86006CC8B1 /* LaunchScreen.storyboard */; };
+		E6FC53C7309BEF86006CC8B1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53C5309BEF86006CC8B1 /* Main.storyboard */; };
+		E6FC53D0309BEF86006CC8B1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FC53CF309BEF86006CC8B1 /* AppDelegate.swift */; };
+		E6FC53D3309BEF86006CC8B1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53D1309BEF86006CC8B1 /* Main.storyboard */; };
+		E6FC53DA309BEF86006CC8B1 /* Parla Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E6FC53D9309BEF86006CC8B1 /* Parla Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E6FC53E4309BEF86006CC8B1 /* Parla Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E6FC53E3309BEF86006CC8B1 /* Parla Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E6FC53E9309BEF86006CC8B1 /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53AE309BEF84006CC8B1 /* Main.html */; };
+		E6FC53EA309BEF86006CC8B1 /* Main.html in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53AE309BEF84006CC8B1 /* Main.html */; };
+		E6FC53EB309BEF86006CC8B1 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53B0309BEF84006CC8B1 /* Icon.png */; };
+		E6FC53EC309BEF86006CC8B1 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53B0309BEF84006CC8B1 /* Icon.png */; };
+		E6FC53ED309BEF86006CC8B1 /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53B1309BEF84006CC8B1 /* Style.css */; };
+		E6FC53EE309BEF86006CC8B1 /* Style.css in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53B1309BEF84006CC8B1 /* Style.css */; };
+		E6FC53EF309BEF86006CC8B1 /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53B2309BEF84006CC8B1 /* Script.js */; };
+		E6FC53F0309BEF86006CC8B1 /* Script.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53B2309BEF84006CC8B1 /* Script.js */; };
+		E6FC53F1309BEF86006CC8B1 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FC53B3309BEF84006CC8B1 /* ViewController.swift */; };
+		E6FC53F2309BEF86006CC8B1 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FC53B3309BEF84006CC8B1 /* ViewController.swift */; };
+		E6FC53F3309BEF86006CC8B1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53B4309BEF86006CC8B1 /* Assets.xcassets */; };
+		E6FC53F4309BEF86006CC8B1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E6FC53B4309BEF86006CC8B1 /* Assets.xcassets */; };
+		E6FC53F5309BEF86006CC8B1 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FC53B6309BEF86006CC8B1 /* SafariWebExtensionHandler.swift */; };
+		E6FC53F6309BEF86006CC8B1 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6FC53B6309BEF86006CC8B1 /* SafariWebExtensionHandler.swift */; };
+		E6FC5421309BEF86006CC8B1 /* popup.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5408309BEF86006CC8B1 /* popup.js */; };
+		E6FC5422309BEF86006CC8B1 /* locales in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5409309BEF86006CC8B1 /* locales */; };
+		E6FC5423309BEF86006CC8B1 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540A309BEF86006CC8B1 /* LICENSE */; };
+		E6FC5424309BEF86006CC8B1 /* telemetry.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540B309BEF86006CC8B1 /* telemetry.js */; };
+		E6FC5425309BEF86006CC8B1 /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540C309BEF86006CC8B1 /* background.js */; };
+		E6FC5426309BEF86006CC8B1 /* engine_worker.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540D309BEF86006CC8B1 /* engine_worker.js */; };
+		E6FC5427309BEF86006CC8B1 /* bridge.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540E309BEF86006CC8B1 /* bridge.js */; };
+		E6FC5428309BEF86006CC8B1 /* popup.html in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540F309BEF86006CC8B1 /* popup.html */; };
+		E6FC5429309BEF86006CC8B1 /* options.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5410309BEF86006CC8B1 /* options.js */; };
+		E6FC542A309BEF86006CC8B1 /* pump_worklet.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5411309BEF86006CC8B1 /* pump_worklet.js */; };
+		E6FC542B309BEF86006CC8B1 /* models in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5412309BEF86006CC8B1 /* models */; };
+		E6FC542C309BEF86006CC8B1 /* NOTICE in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5413309BEF86006CC8B1 /* NOTICE */; };
+		E6FC542D309BEF86006CC8B1 /* engine_frame.html in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5414309BEF86006CC8B1 /* engine_frame.html */; };
+		E6FC542E309BEF86006CC8B1 /* ui.css in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5415309BEF86006CC8B1 /* ui.css */; };
+		E6FC542F309BEF86006CC8B1 /* managed_schema.json in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5416309BEF86006CC8B1 /* managed_schema.json */; };
+		E6FC5430309BEF86006CC8B1 /* icons in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5417309BEF86006CC8B1 /* icons */; };
+		E6FC5431309BEF86006CC8B1 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5418309BEF86006CC8B1 /* manifest.json */; };
+		E6FC5432309BEF86006CC8B1 /* options.html in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5419309BEF86006CC8B1 /* options.html */; };
+		E6FC5433309BEF86006CC8B1 /* inject.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541A309BEF86006CC8B1 /* inject.js */; };
+		E6FC5434309BEF86006CC8B1 /* _locales in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541B309BEF86006CC8B1 /* _locales */; };
+		E6FC5435309BEF86006CC8B1 /* engine in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541C309BEF86006CC8B1 /* engine */; };
+		E6FC5436309BEF86006CC8B1 /* i18n.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541D309BEF86006CC8B1 /* i18n.js */; };
+		E6FC5437309BEF86006CC8B1 /* messages.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541E309BEF86006CC8B1 /* messages.js */; };
+		E6FC5438309BEF86006CC8B1 /* engine_frame.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541F309BEF86006CC8B1 /* engine_frame.js */; };
+		E6FC5439309BEF86006CC8B1 /* build.json in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5420309BEF86006CC8B1 /* build.json */; };
+		E6FC543A309BEF86006CC8B1 /* popup.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5408309BEF86006CC8B1 /* popup.js */; };
+		E6FC543B309BEF86006CC8B1 /* locales in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5409309BEF86006CC8B1 /* locales */; };
+		E6FC543C309BEF86006CC8B1 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540A309BEF86006CC8B1 /* LICENSE */; };
+		E6FC543D309BEF86006CC8B1 /* telemetry.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540B309BEF86006CC8B1 /* telemetry.js */; };
+		E6FC543E309BEF86006CC8B1 /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540C309BEF86006CC8B1 /* background.js */; };
+		E6FC543F309BEF86006CC8B1 /* engine_worker.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540D309BEF86006CC8B1 /* engine_worker.js */; };
+		E6FC5440309BEF86006CC8B1 /* bridge.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540E309BEF86006CC8B1 /* bridge.js */; };
+		E6FC5441309BEF86006CC8B1 /* popup.html in Resources */ = {isa = PBXBuildFile; fileRef = E6FC540F309BEF86006CC8B1 /* popup.html */; };
+		E6FC5442309BEF86006CC8B1 /* options.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5410309BEF86006CC8B1 /* options.js */; };
+		E6FC5443309BEF86006CC8B1 /* pump_worklet.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5411309BEF86006CC8B1 /* pump_worklet.js */; };
+		E6FC5444309BEF86006CC8B1 /* models in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5412309BEF86006CC8B1 /* models */; };
+		E6FC5445309BEF86006CC8B1 /* NOTICE in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5413309BEF86006CC8B1 /* NOTICE */; };
+		E6FC5446309BEF86006CC8B1 /* engine_frame.html in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5414309BEF86006CC8B1 /* engine_frame.html */; };
+		E6FC5447309BEF86006CC8B1 /* ui.css in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5415309BEF86006CC8B1 /* ui.css */; };
+		E6FC5448309BEF86006CC8B1 /* managed_schema.json in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5416309BEF86006CC8B1 /* managed_schema.json */; };
+		E6FC5449309BEF86006CC8B1 /* icons in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5417309BEF86006CC8B1 /* icons */; };
+		E6FC544A309BEF86006CC8B1 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5418309BEF86006CC8B1 /* manifest.json */; };
+		E6FC544B309BEF86006CC8B1 /* options.html in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5419309BEF86006CC8B1 /* options.html */; };
+		E6FC544C309BEF86006CC8B1 /* inject.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541A309BEF86006CC8B1 /* inject.js */; };
+		E6FC544D309BEF86006CC8B1 /* _locales in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541B309BEF86006CC8B1 /* _locales */; };
+		E6FC544E309BEF86006CC8B1 /* engine in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541C309BEF86006CC8B1 /* engine */; };
+		E6FC544F309BEF86006CC8B1 /* i18n.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541D309BEF86006CC8B1 /* i18n.js */; };
+		E6FC5450309BEF86006CC8B1 /* messages.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541E309BEF86006CC8B1 /* messages.js */; };
+		E6FC5451309BEF86006CC8B1 /* engine_frame.js in Resources */ = {isa = PBXBuildFile; fileRef = E6FC541F309BEF86006CC8B1 /* engine_frame.js */; };
+		E6FC5452309BEF86006CC8B1 /* build.json in Resources */ = {isa = PBXBuildFile; fileRef = E6FC5420309BEF86006CC8B1 /* build.json */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E6FC53DB309BEF86006CC8B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E6FC53A8309BEF84006CC8B1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E6FC53D8309BEF86006CC8B1;
+			remoteInfo = "Parla Extension (iOS)";
+		};
+		E6FC53E5309BEF86006CC8B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E6FC53A8309BEF84006CC8B1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E6FC53E2309BEF86006CC8B1;
+			remoteInfo = "Parla Extension (macOS)";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E6FC53FC309BEF86006CC8B1 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				E6FC53DA309BEF86006CC8B1 /* Parla Extension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+		E6FC5403309BEF86006CC8B1 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				E6FC53E4309BEF86006CC8B1 /* Parla Extension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		E6FC53AF309BEF84006CC8B1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = Base.lproj/Main.html; sourceTree = "<group>"; };
+		E6FC53B0309BEF84006CC8B1 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
+		E6FC53B1309BEF84006CC8B1 /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
+		E6FC53B2309BEF84006CC8B1 /* Script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Script.js; sourceTree = "<group>"; };
+		E6FC53B3309BEF84006CC8B1 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		E6FC53B4309BEF86006CC8B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E6FC53B6309BEF86006CC8B1 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
+		E6FC53BB309BEF86006CC8B1 /* Parla.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Parla.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E6FC53BE309BEF86006CC8B1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		E6FC53C0309BEF86006CC8B1 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		E6FC53C3309BEF86006CC8B1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		E6FC53C6309BEF86006CC8B1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		E6FC53C8309BEF86006CC8B1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E6FC53CD309BEF86006CC8B1 /* Parla.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Parla.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E6FC53CF309BEF86006CC8B1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		E6FC53D2309BEF86006CC8B1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		E6FC53D4309BEF86006CC8B1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E6FC53D9309BEF86006CC8B1 /* Parla Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Parla Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E6FC53DE309BEF86006CC8B1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E6FC53E3309BEF86006CC8B1 /* Parla Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Parla Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E6FC53E8309BEF86006CC8B1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E6FC5408309BEF86006CC8B1 /* popup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = popup.js; path = "../../../../build/extension-safari/popup.js"; sourceTree = "<group>"; };
+		E6FC5409309BEF86006CC8B1 /* locales */ = {isa = PBXFileReference; lastKnownFileType = folder; name = locales; path = "../../../../build/extension-safari/locales"; sourceTree = "<group>"; };
+		E6FC540A309BEF86006CC8B1 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; name = LICENSE; path = "../../../../build/extension-safari/LICENSE"; sourceTree = "<group>"; };
+		E6FC540B309BEF86006CC8B1 /* telemetry.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = telemetry.js; path = "../../../../build/extension-safari/telemetry.js"; sourceTree = "<group>"; };
+		E6FC540C309BEF86006CC8B1 /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = background.js; path = "../../../../build/extension-safari/background.js"; sourceTree = "<group>"; };
+		E6FC540D309BEF86006CC8B1 /* engine_worker.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = engine_worker.js; path = "../../../../build/extension-safari/engine_worker.js"; sourceTree = "<group>"; };
+		E6FC540E309BEF86006CC8B1 /* bridge.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = bridge.js; path = "../../../../build/extension-safari/bridge.js"; sourceTree = "<group>"; };
+		E6FC540F309BEF86006CC8B1 /* popup.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = popup.html; path = "../../../../build/extension-safari/popup.html"; sourceTree = "<group>"; };
+		E6FC5410309BEF86006CC8B1 /* options.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = options.js; path = "../../../../build/extension-safari/options.js"; sourceTree = "<group>"; };
+		E6FC5411309BEF86006CC8B1 /* pump_worklet.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = pump_worklet.js; path = "../../../../build/extension-safari/pump_worklet.js"; sourceTree = "<group>"; };
+		E6FC5412309BEF86006CC8B1 /* models */ = {isa = PBXFileReference; lastKnownFileType = folder; name = models; path = "../../../../build/extension-safari/models"; sourceTree = "<group>"; };
+		E6FC5413309BEF86006CC8B1 /* NOTICE */ = {isa = PBXFileReference; lastKnownFileType = text; name = NOTICE; path = "../../../../build/extension-safari/NOTICE"; sourceTree = "<group>"; };
+		E6FC5414309BEF86006CC8B1 /* engine_frame.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = engine_frame.html; path = "../../../../build/extension-safari/engine_frame.html"; sourceTree = "<group>"; };
+		E6FC5415309BEF86006CC8B1 /* ui.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = ui.css; path = "../../../../build/extension-safari/ui.css"; sourceTree = "<group>"; };
+		E6FC5416309BEF86006CC8B1 /* managed_schema.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = managed_schema.json; path = "../../../../build/extension-safari/managed_schema.json"; sourceTree = "<group>"; };
+		E6FC5417309BEF86006CC8B1 /* icons */ = {isa = PBXFileReference; lastKnownFileType = folder; name = icons; path = "../../../../build/extension-safari/icons"; sourceTree = "<group>"; };
+		E6FC5418309BEF86006CC8B1 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = "../../../../build/extension-safari/manifest.json"; sourceTree = "<group>"; };
+		E6FC5419309BEF86006CC8B1 /* options.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = options.html; path = "../../../../build/extension-safari/options.html"; sourceTree = "<group>"; };
+		E6FC541A309BEF86006CC8B1 /* inject.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = inject.js; path = "../../../../build/extension-safari/inject.js"; sourceTree = "<group>"; };
+		E6FC541B309BEF86006CC8B1 /* _locales */ = {isa = PBXFileReference; lastKnownFileType = folder; name = _locales; path = "../../../../build/extension-safari/_locales"; sourceTree = "<group>"; };
+		E6FC541C309BEF86006CC8B1 /* engine */ = {isa = PBXFileReference; lastKnownFileType = folder; name = engine; path = "../../../../build/extension-safari/engine"; sourceTree = "<group>"; };
+		E6FC541D309BEF86006CC8B1 /* i18n.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = i18n.js; path = "../../../../build/extension-safari/i18n.js"; sourceTree = "<group>"; };
+		E6FC541E309BEF86006CC8B1 /* messages.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = messages.js; path = "../../../../build/extension-safari/messages.js"; sourceTree = "<group>"; };
+		E6FC541F309BEF86006CC8B1 /* engine_frame.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = engine_frame.js; path = "../../../../build/extension-safari/engine_frame.js"; sourceTree = "<group>"; };
+		E6FC5420309BEF86006CC8B1 /* build.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = build.json; path = "../../../../build/extension-safari/build.json"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E6FC53B8309BEF86006CC8B1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		E6FC53CA309BEF86006CC8B1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		E6FC53D6309BEF86006CC8B1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		E6FC53E0309BEF86006CC8B1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E6FC53A7309BEF84006CC8B1 = {
+			isa = PBXGroup;
+			children = (
+				E6FC53AC309BEF84006CC8B1 /* Shared (App) */,
+				E6FC53B5309BEF86006CC8B1 /* Shared (Extension) */,
+				E6FC53BD309BEF86006CC8B1 /* iOS (App) */,
+				E6FC53CE309BEF86006CC8B1 /* macOS (App) */,
+				E6FC53DD309BEF86006CC8B1 /* iOS (Extension) */,
+				E6FC53E7309BEF86006CC8B1 /* macOS (Extension) */,
+				E6FC53BC309BEF86006CC8B1 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E6FC53AC309BEF84006CC8B1 /* Shared (App) */ = {
+			isa = PBXGroup;
+			children = (
+				E6FC53B3309BEF84006CC8B1 /* ViewController.swift */,
+				E6FC53B4309BEF86006CC8B1 /* Assets.xcassets */,
+				E6FC53AD309BEF84006CC8B1 /* Resources */,
+			);
+			path = "Shared (App)";
+			sourceTree = "<group>";
+		};
+		E6FC53AD309BEF84006CC8B1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E6FC53AE309BEF84006CC8B1 /* Main.html */,
+				E6FC53B0309BEF84006CC8B1 /* Icon.png */,
+				E6FC53B1309BEF84006CC8B1 /* Style.css */,
+				E6FC53B2309BEF84006CC8B1 /* Script.js */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		E6FC53B5309BEF86006CC8B1 /* Shared (Extension) */ = {
+			isa = PBXGroup;
+			children = (
+				E6FC5407309BEF86006CC8B1 /* Resources */,
+				E6FC53B6309BEF86006CC8B1 /* SafariWebExtensionHandler.swift */,
+			);
+			path = "Shared (Extension)";
+			sourceTree = "<group>";
+		};
+		E6FC53BC309BEF86006CC8B1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E6FC53BB309BEF86006CC8B1 /* Parla.app */,
+				E6FC53CD309BEF86006CC8B1 /* Parla.app */,
+				E6FC53D9309BEF86006CC8B1 /* Parla Extension.appex */,
+				E6FC53E3309BEF86006CC8B1 /* Parla Extension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E6FC53BD309BEF86006CC8B1 /* iOS (App) */ = {
+			isa = PBXGroup;
+			children = (
+				E6FC53BE309BEF86006CC8B1 /* AppDelegate.swift */,
+				E6FC53C0309BEF86006CC8B1 /* SceneDelegate.swift */,
+				E6FC53C2309BEF86006CC8B1 /* LaunchScreen.storyboard */,
+				E6FC53C5309BEF86006CC8B1 /* Main.storyboard */,
+				E6FC53C8309BEF86006CC8B1 /* Info.plist */,
+			);
+			path = "iOS (App)";
+			sourceTree = "<group>";
+		};
+		E6FC53CE309BEF86006CC8B1 /* macOS (App) */ = {
+			isa = PBXGroup;
+			children = (
+				E6FC53CF309BEF86006CC8B1 /* AppDelegate.swift */,
+				E6FC53D1309BEF86006CC8B1 /* Main.storyboard */,
+				E6FC53D4309BEF86006CC8B1 /* Info.plist */,
+			);
+			path = "macOS (App)";
+			sourceTree = "<group>";
+		};
+		E6FC53DD309BEF86006CC8B1 /* iOS (Extension) */ = {
+			isa = PBXGroup;
+			children = (
+				E6FC53DE309BEF86006CC8B1 /* Info.plist */,
+			);
+			path = "iOS (Extension)";
+			sourceTree = "<group>";
+		};
+		E6FC53E7309BEF86006CC8B1 /* macOS (Extension) */ = {
+			isa = PBXGroup;
+			children = (
+				E6FC53E8309BEF86006CC8B1 /* Info.plist */,
+			);
+			path = "macOS (Extension)";
+			sourceTree = "<group>";
+		};
+		E6FC5407309BEF86006CC8B1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E6FC5408309BEF86006CC8B1 /* popup.js */,
+				E6FC5409309BEF86006CC8B1 /* locales */,
+				E6FC540A309BEF86006CC8B1 /* LICENSE */,
+				E6FC540B309BEF86006CC8B1 /* telemetry.js */,
+				E6FC540C309BEF86006CC8B1 /* background.js */,
+				E6FC540D309BEF86006CC8B1 /* engine_worker.js */,
+				E6FC540E309BEF86006CC8B1 /* bridge.js */,
+				E6FC540F309BEF86006CC8B1 /* popup.html */,
+				E6FC5410309BEF86006CC8B1 /* options.js */,
+				E6FC5411309BEF86006CC8B1 /* pump_worklet.js */,
+				E6FC5412309BEF86006CC8B1 /* models */,
+				E6FC5413309BEF86006CC8B1 /* NOTICE */,
+				E6FC5414309BEF86006CC8B1 /* engine_frame.html */,
+				E6FC5415309BEF86006CC8B1 /* ui.css */,
+				E6FC5416309BEF86006CC8B1 /* managed_schema.json */,
+				E6FC5417309BEF86006CC8B1 /* icons */,
+				E6FC5418309BEF86006CC8B1 /* manifest.json */,
+				E6FC5419309BEF86006CC8B1 /* options.html */,
+				E6FC541A309BEF86006CC8B1 /* inject.js */,
+				E6FC541B309BEF86006CC8B1 /* _locales */,
+				E6FC541C309BEF86006CC8B1 /* engine */,
+				E6FC541D309BEF86006CC8B1 /* i18n.js */,
+				E6FC541E309BEF86006CC8B1 /* messages.js */,
+				E6FC541F309BEF86006CC8B1 /* engine_frame.js */,
+				E6FC5420309BEF86006CC8B1 /* build.json */,
+			);
+			name = Resources;
+			path = "Shared (Extension)";
+			sourceTree = SOURCE_ROOT;
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E6FC53BA309BEF86006CC8B1 /* Parla (iOS) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E6FC53FD309BEF86006CC8B1 /* Build configuration list for PBXNativeTarget "Parla (iOS)" */;
+			buildPhases = (
+				E6FC53B7309BEF86006CC8B1 /* Sources */,
+				E6FC53B8309BEF86006CC8B1 /* Frameworks */,
+				E6FC53B9309BEF86006CC8B1 /* Resources */,
+				E6FC53FC309BEF86006CC8B1 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E6FC53DC309BEF86006CC8B1 /* PBXTargetDependency */,
+			);
+			name = "Parla (iOS)";
+			productName = "Parla (iOS)";
+			productReference = E6FC53BB309BEF86006CC8B1 /* Parla.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E6FC53CC309BEF86006CC8B1 /* Parla (macOS) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E6FC5404309BEF86006CC8B1 /* Build configuration list for PBXNativeTarget "Parla (macOS)" */;
+			buildPhases = (
+				E6FC53C9309BEF86006CC8B1 /* Sources */,
+				E6FC53CA309BEF86006CC8B1 /* Frameworks */,
+				E6FC53CB309BEF86006CC8B1 /* Resources */,
+				E6FC5403309BEF86006CC8B1 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E6FC53E6309BEF86006CC8B1 /* PBXTargetDependency */,
+			);
+			name = "Parla (macOS)";
+			productName = "Parla (macOS)";
+			productReference = E6FC53CD309BEF86006CC8B1 /* Parla.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E6FC53D8309BEF86006CC8B1 /* Parla Extension (iOS) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E6FC53F9309BEF86006CC8B1 /* Build configuration list for PBXNativeTarget "Parla Extension (iOS)" */;
+			buildPhases = (
+				E6FC53D5309BEF86006CC8B1 /* Sources */,
+				E6FC53D6309BEF86006CC8B1 /* Frameworks */,
+				E6FC53D7309BEF86006CC8B1 /* Resources */,
+			);
+			buildRules = (
+			);
+			name = "Parla Extension (iOS)";
+			productName = "Parla Extension (iOS)";
+			productReference = E6FC53D9309BEF86006CC8B1 /* Parla Extension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		E6FC53E2309BEF86006CC8B1 /* Parla Extension (macOS) */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E6FC5400309BEF86006CC8B1 /* Build configuration list for PBXNativeTarget "Parla Extension (macOS)" */;
+			buildPhases = (
+				E6FC53DF309BEF86006CC8B1 /* Sources */,
+				E6FC53E0309BEF86006CC8B1 /* Frameworks */,
+				E6FC53E1309BEF86006CC8B1 /* Resources */,
+			);
+			buildRules = (
+			);
+			name = "Parla Extension (macOS)";
+			productName = "Parla Extension (macOS)";
+			productReference = E6FC53E3309BEF86006CC8B1 /* Parla Extension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E6FC53A8309BEF84006CC8B1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					E6FC53BA309BEF86006CC8B1 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					E6FC53CC309BEF86006CC8B1 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					E6FC53D8309BEF86006CC8B1 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					E6FC53E2309BEF86006CC8B1 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = E6FC53AB309BEF84006CC8B1 /* Build configuration list for PBXProject "Parla" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E6FC53A7309BEF84006CC8B1;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = E6FC53BC309BEF86006CC8B1 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E6FC53BA309BEF86006CC8B1 /* Parla (iOS) */,
+				E6FC53CC309BEF86006CC8B1 /* Parla (macOS) */,
+				E6FC53D8309BEF86006CC8B1 /* Parla Extension (iOS) */,
+				E6FC53E2309BEF86006CC8B1 /* Parla Extension (macOS) */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E6FC53B9309BEF86006CC8B1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+				E6FC53EB309BEF86006CC8B1 /* Icon.png in Resources */,
+				E6FC53C4309BEF86006CC8B1 /* LaunchScreen.storyboard in Resources */,
+				E6FC53E9309BEF86006CC8B1 /* Main.html in Resources */,
+				E6FC53EF309BEF86006CC8B1 /* Script.js in Resources */,
+				E6FC53F3309BEF86006CC8B1 /* Assets.xcassets in Resources */,
+				E6FC53C7309BEF86006CC8B1 /* Main.storyboard in Resources */,
+				E6FC53ED309BEF86006CC8B1 /* Style.css in Resources */,
+			);
+		};
+		E6FC53CB309BEF86006CC8B1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+				E6FC53EC309BEF86006CC8B1 /* Icon.png in Resources */,
+				E6FC53EE309BEF86006CC8B1 /* Style.css in Resources */,
+				E6FC53D3309BEF86006CC8B1 /* Main.storyboard in Resources */,
+				E6FC53F0309BEF86006CC8B1 /* Script.js in Resources */,
+				E6FC53F4309BEF86006CC8B1 /* Assets.xcassets in Resources */,
+				E6FC53EA309BEF86006CC8B1 /* Main.html in Resources */,
+			);
+		};
+		E6FC53D7309BEF86006CC8B1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+				E6FC543F309BEF86006CC8B1 /* engine_worker.js in Resources */,
+				E6FC5449309BEF86006CC8B1 /* icons in Resources */,
+				E6FC5444309BEF86006CC8B1 /* models in Resources */,
+				E6FC5442309BEF86006CC8B1 /* options.js in Resources */,
+				E6FC5446309BEF86006CC8B1 /* engine_frame.html in Resources */,
+				E6FC5441309BEF86006CC8B1 /* popup.html in Resources */,
+				E6FC5447309BEF86006CC8B1 /* ui.css in Resources */,
+				E6FC543C309BEF86006CC8B1 /* LICENSE in Resources */,
+				E6FC544F309BEF86006CC8B1 /* i18n.js in Resources */,
+				E6FC5448309BEF86006CC8B1 /* managed_schema.json in Resources */,
+				E6FC543B309BEF86006CC8B1 /* locales in Resources */,
+				E6FC543D309BEF86006CC8B1 /* telemetry.js in Resources */,
+				E6FC5452309BEF86006CC8B1 /* build.json in Resources */,
+				E6FC5450309BEF86006CC8B1 /* messages.js in Resources */,
+				E6FC543A309BEF86006CC8B1 /* popup.js in Resources */,
+				E6FC5445309BEF86006CC8B1 /* NOTICE in Resources */,
+				E6FC544C309BEF86006CC8B1 /* inject.js in Resources */,
+				E6FC544A309BEF86006CC8B1 /* manifest.json in Resources */,
+				E6FC5443309BEF86006CC8B1 /* pump_worklet.js in Resources */,
+				E6FC5451309BEF86006CC8B1 /* engine_frame.js in Resources */,
+				E6FC544E309BEF86006CC8B1 /* engine in Resources */,
+				E6FC5440309BEF86006CC8B1 /* bridge.js in Resources */,
+				E6FC543E309BEF86006CC8B1 /* background.js in Resources */,
+				E6FC544D309BEF86006CC8B1 /* _locales in Resources */,
+				E6FC544B309BEF86006CC8B1 /* options.html in Resources */,
+			);
+		};
+		E6FC53E1309BEF86006CC8B1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+				E6FC5426309BEF86006CC8B1 /* engine_worker.js in Resources */,
+				E6FC5430309BEF86006CC8B1 /* icons in Resources */,
+				E6FC542B309BEF86006CC8B1 /* models in Resources */,
+				E6FC5429309BEF86006CC8B1 /* options.js in Resources */,
+				E6FC542D309BEF86006CC8B1 /* engine_frame.html in Resources */,
+				E6FC5428309BEF86006CC8B1 /* popup.html in Resources */,
+				E6FC542E309BEF86006CC8B1 /* ui.css in Resources */,
+				E6FC5423309BEF86006CC8B1 /* LICENSE in Resources */,
+				E6FC5436309BEF86006CC8B1 /* i18n.js in Resources */,
+				E6FC542F309BEF86006CC8B1 /* managed_schema.json in Resources */,
+				E6FC5422309BEF86006CC8B1 /* locales in Resources */,
+				E6FC5424309BEF86006CC8B1 /* telemetry.js in Resources */,
+				E6FC5439309BEF86006CC8B1 /* build.json in Resources */,
+				E6FC5437309BEF86006CC8B1 /* messages.js in Resources */,
+				E6FC5421309BEF86006CC8B1 /* popup.js in Resources */,
+				E6FC542C309BEF86006CC8B1 /* NOTICE in Resources */,
+				E6FC5433309BEF86006CC8B1 /* inject.js in Resources */,
+				E6FC5431309BEF86006CC8B1 /* manifest.json in Resources */,
+				E6FC542A309BEF86006CC8B1 /* pump_worklet.js in Resources */,
+				E6FC5438309BEF86006CC8B1 /* engine_frame.js in Resources */,
+				E6FC5435309BEF86006CC8B1 /* engine in Resources */,
+				E6FC5427309BEF86006CC8B1 /* bridge.js in Resources */,
+				E6FC5425309BEF86006CC8B1 /* background.js in Resources */,
+				E6FC5434309BEF86006CC8B1 /* _locales in Resources */,
+				E6FC5432309BEF86006CC8B1 /* options.html in Resources */,
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E6FC53B7309BEF86006CC8B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				E6FC53F1309BEF86006CC8B1 /* ViewController.swift in Sources */,
+				E6FC53BF309BEF86006CC8B1 /* AppDelegate.swift in Sources */,
+				E6FC53C1309BEF86006CC8B1 /* SceneDelegate.swift in Sources */,
+			);
+		};
+		E6FC53C9309BEF86006CC8B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				E6FC53F2309BEF86006CC8B1 /* ViewController.swift in Sources */,
+				E6FC53D0309BEF86006CC8B1 /* AppDelegate.swift in Sources */,
+			);
+		};
+		E6FC53D5309BEF86006CC8B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				E6FC53F5309BEF86006CC8B1 /* SafariWebExtensionHandler.swift in Sources */,
+			);
+		};
+		E6FC53DF309BEF86006CC8B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				E6FC53F6309BEF86006CC8B1 /* SafariWebExtensionHandler.swift in Sources */,
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E6FC53DC309BEF86006CC8B1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E6FC53D8309BEF86006CC8B1 /* Parla Extension (iOS) */;
+			targetProxy = E6FC53DB309BEF86006CC8B1 /* PBXContainerItemProxy */;
+		};
+		E6FC53E6309BEF86006CC8B1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E6FC53E2309BEF86006CC8B1 /* Parla Extension (macOS) */;
+			targetProxy = E6FC53E5309BEF86006CC8B1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		E6FC53AE309BEF84006CC8B1 /* Main.html */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E6FC53AF309BEF84006CC8B1 /* Base */,
+			);
+			name = Main.html;
+			sourceTree = "<group>";
+		};
+		E6FC53C2309BEF86006CC8B1 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E6FC53C3309BEF86006CC8B1 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		E6FC53C5309BEF86006CC8B1 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E6FC53C6309BEF86006CC8B1 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		E6FC53D1309BEF86006CC8B1 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E6FC53D2309BEF86006CC8B1 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		E6FC53F7309BEF86006CC8B1 /* Debug configuration for PBXProject "Parla" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		E6FC53F8309BEF86006CC8B1 /* Release configuration for PBXProject "Parla" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		E6FC53FA309BEF86006CC8B1 /* Debug configuration for PBXNativeTarget "Parla Extension (iOS)" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "iOS (Extension)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Parla Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cc.parla.Parla.Extension;
+				PRODUCT_NAME = "Parla Extension";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E6FC53FB309BEF86006CC8B1 /* Release configuration for PBXNativeTarget "Parla Extension (iOS)" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "iOS (Extension)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Parla Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cc.parla.Parla.Extension;
+				PRODUCT_NAME = "Parla Extension";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E6FC53FE309BEF86006CC8B1 /* Debug configuration for PBXNativeTarget "Parla (iOS)" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "iOS (App)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Parla;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cc.parla.Parla;
+				PRODUCT_NAME = Parla;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E6FC53FF309BEF86006CC8B1 /* Release configuration for PBXNativeTarget "Parla (iOS)" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "iOS (App)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Parla;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cc.parla.Parla;
+				PRODUCT_NAME = Parla;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E6FC5401309BEF86006CC8B1 /* Debug configuration for PBXNativeTarget "Parla Extension (macOS)" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "macOS (Extension)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Parla Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cc.parla.Parla.Extension;
+				PRODUCT_NAME = "Parla Extension";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E6FC5402309BEF86006CC8B1 /* Release configuration for PBXNativeTarget "Parla Extension (macOS)" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "macOS (Extension)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Parla Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cc.parla.Parla.Extension;
+				PRODUCT_NAME = "Parla Extension";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E6FC5405309BEF86006CC8B1 /* Debug configuration for PBXNativeTarget "Parla (macOS)" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "macOS (App)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Parla;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cc.parla.Parla;
+				PRODUCT_NAME = Parla;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E6FC5406309BEF86006CC8B1 /* Release configuration for PBXNativeTarget "Parla (macOS)" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "macOS (App)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Parla;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cc.parla.Parla;
+				PRODUCT_NAME = Parla;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E6FC53AB309BEF84006CC8B1 /* Build configuration list for PBXProject "Parla" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E6FC53F7309BEF86006CC8B1 /* Debug configuration for PBXProject "Parla" */,
+				E6FC53F8309BEF86006CC8B1 /* Release configuration for PBXProject "Parla" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		E6FC53F9309BEF86006CC8B1 /* Build configuration list for PBXNativeTarget "Parla Extension (iOS)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E6FC53FA309BEF86006CC8B1 /* Debug configuration for PBXNativeTarget "Parla Extension (iOS)" */,
+				E6FC53FB309BEF86006CC8B1 /* Release configuration for PBXNativeTarget "Parla Extension (iOS)" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		E6FC53FD309BEF86006CC8B1 /* Build configuration list for PBXNativeTarget "Parla (iOS)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E6FC53FE309BEF86006CC8B1 /* Debug configuration for PBXNativeTarget "Parla (iOS)" */,
+				E6FC53FF309BEF86006CC8B1 /* Release configuration for PBXNativeTarget "Parla (iOS)" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		E6FC5400309BEF86006CC8B1 /* Build configuration list for PBXNativeTarget "Parla Extension (macOS)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E6FC5401309BEF86006CC8B1 /* Debug configuration for PBXNativeTarget "Parla Extension (macOS)" */,
+				E6FC5402309BEF86006CC8B1 /* Release configuration for PBXNativeTarget "Parla Extension (macOS)" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		E6FC5404309BEF86006CC8B1 /* Build configuration list for PBXNativeTarget "Parla (macOS)" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E6FC5405309BEF86006CC8B1 /* Debug configuration for PBXNativeTarget "Parla (macOS)" */,
+				E6FC5406309BEF86006CC8B1 /* Release configuration for PBXNativeTarget "Parla (macOS)" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E6FC53A8309BEF84006CC8B1 /* Project object */;
+	validationLevel = 1;
+}
