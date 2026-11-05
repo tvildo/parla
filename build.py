@@ -430,7 +430,7 @@ def cmd_test(args: list[str]) -> None:
 
 
 def cmd_screenshots(args: list[str]) -> None:
-    """docs/images/*.png and src/site/public/screenshots/ from the current builds (extension, site), taken on this
+    """docs/images/*.png and src/site/src/assets/screenshots/ from the current builds (extension, site), taken on this
     machine's Chromium (its fonts). Rebuild the site afterwards to ship the new images."""
     run([npm(), "exec", "--", "playwright", "test", "--project", "screenshots", *args], cwd=ROOT / "tests", env={"SCREENSHOTS": "1"})
 
