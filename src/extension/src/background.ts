@@ -35,7 +35,8 @@ hooks.viStatus = status;
 let managedNow: Partial<Settings> | null = null;
 const managedFirst = refreshManaged();
 async function refreshManaged(): Promise<Partial<Settings>> {
-  const m = (await chrome.storage.managed.get(null).catch(() => ({}))) as Partial<Settings>;
+  // Safari has no managed storage (no enterprise policy there): no policy
+  const m = (chrome.storage.managed ? await chrome.storage.managed.get(null).catch(() => ({})) : {}) as Partial<Settings>;
   managedNow = m;
   await chrome.storage.local.set({ managedCache: m });
   return m;
@@ -75,8 +76,8 @@ async function config(origin: string): Promise<Omit<PageConfig, 'base'>> {
 
 function badge(tabId: number, st: TabStatus | null) {
   const on = !!st && (st.active ?? 0) > 0;
-  chrome.action.setBadgeText({ tabId, text: st && st.error ? '!' : on ? 'ON' : '' }).catch(() => {});
-  chrome.action.setBadgeBackgroundColor({ tabId, color: st && st.error ? '#f59e0b' : '#22c55e' }).catch(() => {});
+  chrome.action.setBadgeText?.({ tabId, text: st && st.error ? '!' : on ? 'ON' : '' })?.catch(() => {});
+  chrome.action.setBadgeBackgroundColor?.({ tabId, color: st && st.error ? '#f59e0b' : '#22c55e' })?.catch(() => {});
 }
 
 // What pages can send. bridge.ts relays the page script's messages, and the page script runs in the page's own
@@ -178,7 +179,8 @@ async function onUpdateAvailable(details: { version?: string }) {
   await chrome.storage.session.set({ pendingUpdate: details.version || true, pendingSince: pendingSince ?? Date.now() });
   maybeUpdate();
 }
-chrome.runtime.onUpdateAvailable.addListener(onUpdateAvailable);
+// Safari has no onUpdateAvailable: the App Store updates the app, and with it the extension
+chrome.runtime.onUpdateAvailable?.addListener(onUpdateAvailable);
 maybeUpdate();   // a worker restarted while an update was waiting
 // reports queued while offline; the daily `active` report
 settings().then(async ({ merged }) => { if (!(await telemetry.active(merged))) await telemetry.flush(merged); }).catch(() => {});
