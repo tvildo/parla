@@ -47,12 +47,12 @@ Free · Open source · No account · No sign-up
 
 ## Install
 
-Parla for **Chrome, Edge, Firefox and Safari** is on its way to the Chrome Web Store, Firefox Add-ons and the App Store
-(Safari on macOS, iPhone and iPad).
+- **Chrome, Edge, Brave, Opera**: [Chrome Web Store](https://chromewebstore.google.com/detail/iifachdagbndcbloopehiagjopjkohei)
+- **Firefox** (140+): [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/parla-ai-noise-suppression/)
+- **Safari** (macOS, iPhone, iPad): coming to the App Store
 
-Until then, follow **[parla.cc/install](https://parla.cc/install/)** (a minute per browser), or download it from the
-[latest release](https://github.com/tvildo/parla/releases/latest)
-(`parla-chrome-….zip` or `parla-firefox-….zip`) and load it yourself: see
+Free, no account, and it updates itself. You can also load the files of the
+[latest release](https://github.com/tvildo/parla/releases/latest) yourself:
 [installing the extension](docs/extension.md#install). Want to hear it first? The
 **[live demo](https://parla.cc/demo/)** runs right in your browser, nothing to install.
 

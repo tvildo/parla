@@ -1,8 +1,9 @@
 ---
-// How to install the extension, per browser. Until the stores list Parla, the downloads are the current release's
-// files on GitHub (their names carry the version: build.py passes it as PARLA_VERSION).
+// How to install the extension, per browser: from the store first (it updates itself), the current release's files
+// on GitHub as the other way (their names carry the version: build.py passes it as PARLA_VERSION).
 import Base from "../layouts/Base.astro";
 import { seg, translator } from "../i18n";
+import { STORES } from "../stores";
 
 interface Props { lang: string }
 const { lang } = Astro.props;
@@ -15,8 +16,10 @@ const file = (browser: string) => `parla-${browser}-v${version}.zip`;
 const download = (browser: string) => (version ? `${REPO}/releases/download/v${version}/${file(browser)}` : `${REPO}/releases/latest`);
 const code = (s: string) => `<code>${s}</code>`;
 const browsers = [
-  { id: "chrome", name: "Chrome · Edge · Brave · Opera", steps: t("install.chrome", { ext: code("chrome://extensions"), edge: code("edge://extensions") }), store: t("site.install.chrome") },
-  { id: "firefox", name: "Firefox", steps: t("install.firefox", { url: code("about:debugging") }), store: t("site.install.firefox") },
+  { id: "chrome", name: "Chrome · Edge · Brave · Opera", store: STORES.chrome, add: t("site.install.chrome"), how: t("install.store.chrome"),
+    steps: t("install.chrome", { ext: code("chrome://extensions"), edge: code("edge://extensions") }) },
+  { id: "firefox", name: "Firefox", store: STORES.firefox, add: t("site.install.firefox"), how: t("install.store.firefox"),
+    steps: t("install.firefox", { url: code("about:debugging") }) },
 ];
 ---
 <Base lang={lang} page="install/" title={t("install.title")} description={t("install.description")}>
@@ -28,11 +31,17 @@ const browsers = [
     {browsers.map((b) => (
       <section class="card browser" id={b.id}>
         <h2>{b.name}</h2>
-        <p set:html={b.steps} />
+        <p>{b.how}</p>
         <div class="actions start">
-          <a class="btn primary" href={download(b.id)} download>{t("install.download", { file: version ? file(b.id) : "" }).trim()}</a>
-          <span class="btn" aria-disabled="true">{b.store}</span>
+          <a class="btn primary" href={b.store}>{b.add}</a>
         </div>
+        <details class="manual">
+          <summary>{t("install.manual")}</summary>
+          <p set:html={b.steps} />
+          <div class="actions start">
+            <a class="btn" href={download(b.id)} download>{t("install.download", { file: version ? file(b.id) : "" }).trim()}</a>
+          </div>
+        </details>
       </section>
     ))}
 

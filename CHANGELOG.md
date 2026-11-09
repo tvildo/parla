@@ -6,6 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Parla is in the [Chrome Web Store](https://chromewebstore.google.com/detail/iifachdagbndcbloopehiagjopjkohei) (Chrome, Edge, Brave, Opera) and on
+  [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/parla-ai-noise-suppression/). The website's install page and home page link the stores
+  first; the release files stay as the other way.
 - Website: an **install page** (parla.cc/install) with direct downloads of the current release for Chrome / Edge and
   Firefox, the steps for each browser and the latest version number; the home page's install button and the menu point
   to it. The promo video is on the home page: our own poster, and YouTube (privacy-enhanced mode) loads only when the

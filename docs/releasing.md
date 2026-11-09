@@ -65,14 +65,16 @@ and npm steps are skipped (a notice in the run), and the GitHub release still ha
 **Chrome Web Store**
 
 1. Register as a Chrome Web Store developer and upload `parla-chrome-*.zip` once in the
-   [developer dashboard](https://chrome.google.com/webstore/devconsole). Its ID is `CWS_EXTENSION_ID`; the
-   publisher ID (dashboard → Account) is `CWS_PUBLISHER_ID`.
+   [developer dashboard](https://chrome.google.com/webstore/devconsole) (done: [Parla](https://chromewebstore.google.com/detail/iifachdagbndcbloopehiagjopjkohei)). Its ID
+   (`iifachdagbndcbloopehiagjopjkohei`) is `CWS_EXTENSION_ID`; the publisher ID (dashboard → Account) is
+   `CWS_PUBLISHER_ID`.
 2. In Google Cloud: enable the *Chrome Web Store API*, create an OAuth client (type *Desktop app*) and a refresh token
    for it (steps: [chrome-webstore-upload-keys](https://github.com/fregante/chrome-webstore-upload-keys)).
 
 **Firefox Add-ons**
 
-1. Submit `parla-firefox-*.zip` once on [addons.mozilla.org](https://addons.mozilla.org/developers/) (listed), with
+1. Submit `parla-firefox-*.zip` once on [addons.mozilla.org](https://addons.mozilla.org/developers/) (listed; done:
+   [Parla](https://addons.mozilla.org/firefox/addon/parla-ai-noise-suppression/)), with
    the source code and how to build it: `npm ci`, `python build.py wasm --only 0` (1, 2), then
    `PARLA_COMMIT=<commit> python build.py extension --browser firefox --version X.Y.Z` (Rust 1.99.0, binaryen 133, Node
    26 on Linux; the result is byte-identical).

@@ -5,9 +5,13 @@ Teams, Zoom (web), Discord, Slack and any other site that uses the microphone â€
 
 ## Install
 
-Until it is in the Chrome Web Store and Firefox Add-ons, download `parla-chrome-vX.Y.Z.zip` or
-`parla-firefox-vX.Y.Z.zip` from the [latest release](https://github.com/tvildo/parla/releases/latest) and unzip it
-(or build it from source, [how to build](development.md#build): `build/extension`, `build/extension-firefox`). Then:
+- **Chrome, Edge, Brave, Opera**: [Chrome Web Store](https://chromewebstore.google.com/detail/iifachdagbndcbloopehiagjopjkohei)
+- **Firefox** (140+, also Firefox for Android 142+): [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/parla-ai-noise-suppression/)
+
+The stores install it in a click and keep it up to date. To load it yourself (a release's files, or your own build),
+download `parla-chrome-vX.Y.Z.zip` or `parla-firefox-vX.Y.Z.zip` from the
+[latest release](https://github.com/tvildo/parla/releases/latest) and unzip it (or build it from source,
+[how to build](development.md#build): `build/extension`, `build/extension-firefox`). Then:
 
 - **Chrome / Edge**: open `chrome://extensions`, turn on *Developer mode*, click *Load unpacked* and choose the
   unzipped folder.

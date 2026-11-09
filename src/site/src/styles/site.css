@@ -137,4 +137,7 @@ footer.foot a { color: var(--faint); }
 .install .browser { margin-bottom: 18px; }
 .install .browser h2 { font-size: 20px; margin-bottom: 8px; }
 .install .browser .actions { margin-top: 16px; }
+.install .manual { margin-top: 18px; color: var(--muted); }
+.install .manual summary { cursor: pointer; }
+.install .manual p { margin-top: 10px; }
 .install code { background: #1c1c30; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: .92em; }
