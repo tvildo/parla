@@ -195,7 +195,10 @@ jobs:
         run: |
           if [ -z "$REFRESH_TOKEN" ]; then echo "::notice::no Chrome Web Store secrets yet: skipped"; exit 0; fi
           npm ci --prefix tools/release --no-audit --no-fund && npm audit signatures --prefix tools/release
-          tools/release/node_modules/.bin/chrome-webstore-upload --source dist/extension.zip
+          # output hidden: an error could print the access token made from the secrets (GitHub masks only the secrets)
+          tools/release/node_modules/.bin/chrome-webstore-upload --source dist/extension.zip >/dev/null 2>&1 \
+            || { echo "::error::Chrome Web Store upload failed (output hidden; check the item in the developer dashboard)"; exit 1; }
+          echo "Chrome Web Store: uploaded and submitted for review"
 
   firefox:
     needs: [version, release]
@@ -221,8 +224,11 @@ jobs:
           git -C source archive --format=zip -o "$PWD/source.zip" HEAD
           mkdir firefox && unzip -q extension-firefox.zip -d firefox
           npm ci --prefix source/tools/release --no-audit --no-fund && npm audit signatures --prefix source/tools/release
+          # output hidden: an error could print the signed request made from the secrets (GitHub masks only the secrets)
           source/tools/release/node_modules/.bin/web-ext sign --source-dir firefox --artifacts-dir web-ext-artifacts \
-            --channel listed --upload-source-code source.zip --approval-timeout 0
+            --channel listed --upload-source-code source.zip --approval-timeout 0 >/dev/null 2>&1 \
+            || { echo "::error::Firefox Add-ons upload failed (output hidden; check the add-on in the developer hub)"; exit 1; }
+          echo "Firefox Add-ons: uploaded and submitted for review"
 
   npm:
     needs: [version, release]
@@ -243,7 +249,10 @@ jobs:
           TRUSTED: ${{ vars.NPM_TRUSTED_PUBLISHING }}
         run: |
           if [ "$TRUSTED" != true ]; then echo "::notice::npm trusted publishing not switched on (repo variable NPM_TRUSTED_PUBLISHING): skipped"; exit 0; fi
-          npm publish tvildo-parla-*.tgz --access public --provenance
+          # output hidden: an error could print the short-lived publish token
+          npm publish tvildo-parla-*.tgz --access public --provenance >/dev/null 2>&1 \
+            || { echo "::error::npm publish failed (output hidden)"; exit 1; }
+          echo "npm: published"
 
   telemetry:
     needs: [version, build]
@@ -268,7 +277,10 @@ jobs:
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::notice::no Cloudflare secrets yet: skipped"; exit 0; fi
           npm ci --no-audit --no-fund && npm audit signatures
           node src/telemetry/worker.test.ts
-          python3 build.py telemetry-deploy --sample "$SAMPLE" --daily-limit "$DAILY_LIMIT"
+          # output hidden: an error could print details of the Cloudflare account
+          python3 build.py telemetry-deploy --sample "$SAMPLE" --daily-limit "$DAILY_LIMIT" >/dev/null 2>&1 \
+            || { echo "::error::report receiver deploy failed (output hidden)"; exit 1; }
+          echo "report receiver: deployed"
 
   pages:
     # after the release (if there is one), so the install page never links files that don't exist yet
