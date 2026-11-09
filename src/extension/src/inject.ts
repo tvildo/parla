@@ -2,9 +2,9 @@
 // any web calling app gets noise-suppressed microphone audio without changing its code.
 //
 //   getUserMedia({audio, video}) -> the real microphone (browser noise suppression off: ours replaces it;
-//   echo cancellation / gain control as the site asked) -> the vi engine -> a MediaStreamTrack that looks
-//   like the microphone (label, settings, constraints, stop() and 'ended' follow the real one) + the
-//   original video tracks.
+//   browser echo cancellation always on, see wrap(); gain control as the site asked) -> the vi engine -> a
+//   MediaStreamTrack that looks like the microphone (label, settings, constraints, stop() and 'ended' follow the
+//   real one; settings show what the site asked for) + the original video tracks.
 //
 // Two ways to run the engine (both run the same worklet code, src/engine/js/worklet.ts, bundled):
 //   page      the engine's AudioWorklet + wasm in the page's own audio graph (lowest latency). Needs the
@@ -15,11 +15,16 @@
 // 'auto' tries page, then isolated. If neither can start, the site gets the original microphone: a
 // failure here must never break a call.
 //
+// Popup meter: only while a popup is open, the engine's levels go to it through the echo gate (echo_gate.ts), with
+// the incoming call audio's level as its reference: the other side coming back through the speakers is not shown as
+// the user. For that, each RTCPeerConnection that gets a remote description is noted (nothing else runs in a call).
+//
 // Live control: the popup / policy change settings -> bridge pushes a new config -> strength and on/off
 // apply to running streams (ramped in the engine, no clicks), a model change crossfades.
 import type { WorkletIn, WorkletOut, WorkletStats } from '../../engine/js/worklet.ts';
 import type { Manifest } from '../../engine/js/vi_engine.ts';
 import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent, Mode } from './messages.ts';
+import { EchoGate } from './echo_gate.ts';
 
 (() => {
   if ((window as { __viExtension?: unknown }).__viExtension) return;
@@ -78,7 +83,7 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
     }
     if (m.type === 'config') { const c = (cfg = m.config); for (const s of sessions) s.apply(c).catch((err) => report({ error: err.message })); }
     if (m.type === 'lost') lost();
-    if (m.type === 'meter') meterOn = !!m.on;
+    if (m.type === 'meter') { meterOn = !!m.on; if (!meterOn) far.stop(); else log(`popup meter open (${peers.size} call connections, ${played.size} played streams)`); }
   }
   // a popup shows the live meter: forward the engine's levels while it is open
   let meterOn = false;
@@ -89,6 +94,7 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
     if (port) { try { port.close(); } catch { /* gone */ } }
     port = null;
     meterOn = false;
+    far.stop();
     portReady = new Promise<MessagePort>((res) => { portOk = res; });
     cfg = null; wasmModule = null; packages.clear();
     for (const s of sessions) if (s.mode === 'isolated') s.raw();
@@ -140,6 +146,74 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
   for (const type of ['pointerdown', 'keydown']) {
     addEventListener(type, () => { if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {}); }, { capture: true });
   }
+  // ---- the other side of the call: the level the page plays, for the popup's echo gate only ----
+  // Two ways to find it, for any call app: each RTCPeerConnection that gets a remote description (its receivers'
+  // audio tracks), and each stream the page plays in an <audio> / <video> element (srcObject). Only noted here; while
+  // a popup's meter is open, their audio tracks (not the microphone's) feed an analyser in our audio context. Nothing
+  // is recorded, kept or sent, and it is closed with the popup.
+  const peers = new Set<RTCPeerConnection>();
+  const played = new Set<MediaStream>();
+  {
+    const P = (window as { RTCPeerConnection?: typeof RTCPeerConnection }).RTCPeerConnection;
+    const orig = P?.prototype?.setRemoteDescription as ((...a: unknown[]) => Promise<void>) | undefined;
+    if (P && typeof orig === 'function') {
+      const setRemoteDescription = function (this: RTCPeerConnection, ...a: unknown[]) {
+        if (!peers.has(this)) { peers.add(this); log(`call connection noted (${peers.size})`); }
+        return orig.apply(this, a);
+      };
+      Object.defineProperty(setRemoteDescription, 'length', { value: orig.length });
+      (P.prototype as { setRemoteDescription: unknown }).setRemoteDescription = setRemoteDescription;
+    }
+    const M = (window as { HTMLMediaElement?: typeof HTMLMediaElement }).HTMLMediaElement;
+    const d = M && Object.getOwnPropertyDescriptor(M.prototype, 'srcObject');
+    if (d && d.get && d.set) {
+      const set = d.set;
+      Object.defineProperty(M.prototype, 'srcObject', {
+        ...d,
+        set(this: HTMLMediaElement, v: MediaProvider | null) {
+          if (v instanceof MediaStream && !played.has(v)) { played.add(v); if (v.getAudioTracks().length) log(`played stream noted (${v.getAudioTracks().length} audio tracks)`); }
+          set.call(this, v);
+        },
+      });
+    }
+  }
+  /** a track the page plays that is not the user's microphone (ours: the label of a running session's microphone) */
+  const incoming = (t: MediaStreamTrack) => t.kind === 'audio' && t.readyState === 'live' && ![...sessions].some((x) => x.src.label === t.label);
+  const far = {
+    an: null as AnalyserNode | null, buf: new Float32Array(2048), taps: new Map<MediaStreamTrack, MediaStreamAudioSourceNode>(),
+    /** the incoming call audio's level now (RMS dBFS of all its audio tracks together; -120 without any) */
+    level(c: AudioContext): number {
+      if (!this.an || this.an.context !== c) { this.stop(); this.an = c.createAnalyser(); this.an.fftSize = this.buf.length; }
+      const had = this.taps.size;
+      const found: MediaStreamTrack[] = [];
+      for (const pc of peers) {
+        if (pc.connectionState === 'closed') { peers.delete(pc); continue; }
+        for (const r of pc.getReceivers()) if (r.track) found.push(r.track);
+      }
+      for (const st of played) {
+        const a = st.getAudioTracks();
+        if (!a.length || a.every((t) => t.readyState === 'ended')) { if (!st.active) played.delete(st); continue; }
+        found.push(...a);
+      }
+      for (const t of found) {
+        if (this.taps.has(t) || !incoming(t)) continue;
+        try { const n = c.createMediaStreamSource(new MediaStream([t])); n.connect(this.an); this.taps.set(t, n); } catch { /* not readable */ }
+      }
+      if (this.taps.size > had) log(`popup meter: the call's incoming audio as the echo reference (${this.taps.size} tracks)`);
+      for (const [t, n] of this.taps) if (t.readyState !== 'live') { n.disconnect(); this.taps.delete(t); }
+      if (!this.taps.size) return -120;
+      this.an.getFloatTimeDomainData(this.buf);
+      let e = 0;
+      for (const x of this.buf) e += x * x;
+      return 10 * Math.log10(e / this.buf.length + 1e-12);
+    },
+    stop() {
+      for (const n of this.taps.values()) { try { n.disconnect(); } catch { /* gone */ } }
+      this.taps.clear();
+      this.an = null;
+    },
+  };
+
   const worklets = new WeakMap<AudioContext, Set<string>>();   // ctx -> Set of loaded module names
   async function loadWorklet(c: AudioContext, path: string) {
     let done = worklets.get(c);
@@ -218,7 +292,7 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
     engine: AudioWorkletNode | null = null; link: Link | null = null; module: ArrayBuffer | null = null;
     source: MediaStreamAudioSourceNode | null = null; dest: MediaStreamAudioDestinationNode | null = null;
     dry: GainNode | null = null; wet: GainNode | null = null; out: MediaStreamTrack | null = null;
-    t0 = 0; vt = 0; switches = 0; loadMs?: number; latencyMs = 0; strength?: number; offMs = 0; offSince = 0;
+    gate = new EchoGate(); t0 = 0; vt = 0; switches = 0; loadMs?: number; latencyMs = 0; strength?: number; offMs = 0; offSince = 0;
     constructor(src: MediaStreamTrack) { this.src = src; }
 
     /** one more track of the page uses this session (sites like Meet open the same microphone twice) */
@@ -353,8 +427,10 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
     event(m: WorkletOut) {
       if (m.type === 'voice') {
         const now = Date.now();
-        if (now - (this.vt || 0) > 400) { this.vt = now; report({ speaking: m.speaking, levelDb: Math.round(m.levelDb) }); }
-        if (meterOn) tell({ type: 'meter', inDb: m.inDb, outDb: m.outDb, speaking: m.speaking });
+        // a popup is open: the other side's voice coming back through the speakers is shown as background noise
+        const v = meterOn && ctx ? this.gate.step(m, far.level(ctx)) : m;
+        if (now - (this.vt || 0) > 400) { this.vt = now; report({ speaking: v.speaking, levelDb: Math.round(m.levelDb) }); }
+        if (meterOn) tell({ type: 'meter', inDb: v.inDb, outDb: v.outDb, speaking: v.speaking });
       } else if (m.type === 'error') { report({ error: m.message }); telemetry({ t: 'error', code: 'engine', msg: m.message, mode: this.mode, model: this.model }); }
     }
 
@@ -405,6 +481,9 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
     }
   }
 
+  /** whether a site asked for it on (browsers default to on; a text value such as echo cancellation's 'all' = on) */
+  const asked = (v: ConstrainBooleanOrDOMString | undefined): boolean => (typeof v === 'object' ? (v.exact ?? v.ideal ?? true) : (v ?? true)) !== false;
+
   /** sessions between getUserMedia and their engine being up: the audio context must not close under them */
   let starting = 0;
   /** no call left in this page: close the audio context (a new call opens a new one) */
@@ -414,15 +493,18 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
 
   /** make the processed track behave like the microphone it replaces. Each track the page holds counts as one user
    *  of the session (clones too: a page may clone and stop the original); the last one stopped ends the session. */
-  function disguise(out: MediaStreamTrack, src: MediaStreamTrack, session: Session): MediaStreamTrack {
+  function disguise(out: MediaStreamTrack, src: MediaStreamTrack, session: Session, siteEc: boolean): MediaStreamTrack {
     const own = (name: string, value: unknown) => Object.defineProperty(out, name, { value, configurable: true });
     const cloneOut = out.clone.bind(out);
-    own('clone', () => { session.acquire(); return disguise(cloneOut(), src, session); });
+    own('clone', () => { session.acquire(); return disguise(cloneOut(), src, session, siteEc); });
     Object.defineProperty(out, 'label', { get: () => src.label, configurable: true });
-    own('getSettings', () => ({ ...src.getSettings(), noiseSuppression: true }));
+    own('getSettings', () => ({ ...src.getSettings(), noiseSuppression: true, echoCancellation: siteEc }));
     own('getCapabilities', () => src.getCapabilities());
     own('getConstraints', () => src.getConstraints());
-    own('applyConstraints', (c?: MediaTrackConstraints) => src.applyConstraints(c && typeof c === 'object' ? { ...c, noiseSuppression: false } : c));
+    own('applyConstraints', (c?: MediaTrackConstraints) => {
+      if (c && typeof c === 'object' && 'echoCancellation' in c) siteEc = asked(c.echoCancellation);
+      return src.applyConstraints(c && typeof c === 'object' ? { ...c, noiseSuppression: false, echoCancellation: true } : c);
+    });
     const stopOut = out.stop.bind(out);
     let done = false;
     own('stop', () => { if (!done) { done = true; session.release(); } stopOut(); });
@@ -444,7 +526,13 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
     const audio: MediaTrackConstraints = constraints.audio === true ? {} : { ...constraints.audio };
     // what the site asked for (browsers default to on): restored if our engine can't start
     const siteNs = audio.noiseSuppression ?? true;
-    audio.noiseSuppression = false;   // ours replaces the browser's; echo cancellation / AGC stay as asked
+    const siteEc = audio.echoCancellation;
+    audio.noiseSuppression = false;   // ours replaces the browser's; gain control stays as asked
+    // The browser's echo cancellation always runs before our engine. Some apps turn it off to run their own on the
+    // track they get (Meet: {exact: false}); but on speakers the other side's voices then reach our engine, which is
+    // made to keep voices: they count as the user's speech, and the app's echo canceller works on audio our engine
+    // has already changed. With it on, the app's own canceller just gets a cleaner signal.
+    audio.echoCancellation = true;
     const stream = await origGUM({ ...constraints, audio });
     const src = stream.getAudioTracks()[0];
     if (!src) return stream;
@@ -456,7 +544,7 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
       shared.acquire();
       src.stop();
       log(`same microphone again: sharing the running session (${shared.users} tracks)`);
-      return new MediaStream([disguise(shared.out!.clone(), shared.src, shared), ...stream.getVideoTracks()]);
+      return new MediaStream([disguise(shared.out!.clone(), shared.src, shared, asked(siteEc)), ...stream.getVideoTracks()]);
     }
     const s = new Session(src);
     try {
@@ -465,7 +553,7 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
       if (cfg && cfg !== c) await s.apply(cfg);   // settings changed while the engine was starting
       report();
       log(`on: ${s.model}, ${s.mode} mode`);
-      return new MediaStream([disguise(out.clone(), src, s), ...stream.getVideoTracks()]);
+      return new MediaStream([disguise(out.clone(), src, s, asked(siteEc)), ...stream.getVideoTracks()]);
     } catch (e) {
       s.live = false;
       s.teardown();
@@ -473,7 +561,7 @@ import type { PageConfig, PageToBridge, BridgeToPage, TabStatus, TelemetryEvent,
       report({ error: `noise suppression could not start here: ${msg}`, mode: null });
       telemetry({ t: 'error', code: 'start', msg, model: c.model });
       log(`could not start, using the plain microphone: ${msg}`);
-      src.applyConstraints({ ...audio, noiseSuppression: siteNs }).catch(() => {});
+      src.applyConstraints({ ...audio, noiseSuppression: siteNs, echoCancellation: siteEc ?? true }).catch(() => {});
       return stream;   // the call goes on with the plain microphone
     }
   }

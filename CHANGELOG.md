@@ -88,6 +88,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The extension no longer asks for the `identity` permission.
 
 ### Fixed
+- In Google Meet on speakers, the other people's voices counted as your speech (the popup's speech detection and
+  meter jumped when they talked; the call itself was fine: Meet removed the echo before sending). The popup now shows
+  only your voice and your background noise: while it is open, Parla compares your microphone with the call's
+  incoming audio, and the other side's echo shows as background noise. And Parla always keeps the browser's echo
+  cancellation on under it (Meet turns it off to run its own; Meet still sees the setting it asked for, and its own
+  echo cancellation gets a cleaner signal).
+- Switching Parla off for a site during a call left the popup's meter moving and quality / strength changeable; now
+  the meter goes away and both are greyed out until it is on again.
 - Firefox Add-ons warned "Manifest key not supported by the specified minimum Firefox version"
   (`data_collection_permissions`): the Firefox build now needs Firefox 140 (ESR) or Firefox for Android 142.
 - The Chrome Web Store refused the extension zip ("More than one manifest file was found in the package"): the

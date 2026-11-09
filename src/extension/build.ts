@@ -47,8 +47,10 @@ fs.rmSync(OUT, { recursive: true, force: true });
 // pages, styles, manifest, policy schema from the source; the code as emitted (messages.ts is types + one helper)
 copyDir(path.join(REPO, 'src', 'extension', 'src'), OUT, (n) => !n.endsWith('.ts'));
 const JS = path.dirname(emitted(REPO, 'src', 'extension', 'src', 'background.ts'));
-for (const f of fs.readdirSync(JS).filter((n) => n.endsWith('.js'))) {
-  fs.writeFileSync(path.join(OUT, f), CLASSIC.has(f) ? classic(path.join(JS, f)) : fs.readFileSync(path.join(JS, f)));
+// inject.js imports the popup's echo gate: bundled into it (echo_gate.js isn't shipped on its own)
+const BUNDLED = new Set(['echo_gate.js']);
+for (const f of fs.readdirSync(JS).filter((n) => n.endsWith('.js') && !BUNDLED.has(n))) {
+  fs.writeFileSync(path.join(OUT, f), f === 'inject.js' ? bundle(path.join(JS, f)) : CLASSIC.has(f) ? classic(path.join(JS, f)) : fs.readFileSync(path.join(JS, f)));
 }
 // translations (src/i18n): locales/<code>.json = the ext.* keys for the popup / options (i18n.ts), and
 // _locales/<store code>/messages.json for the manifest's name and description (store listings; languages the

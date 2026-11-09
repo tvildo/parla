@@ -87,21 +87,24 @@ async function refresh() {
   $('siteOn').checked = siteOn;
   $('siteOn').disabled = !usable || policy.has('lockEnabled') && !!s.lockEnabled;
   $('model').value = s.model;
-  $('model').disabled = policy.has('model');
+  // switched off for this site: nothing to set or show (quality and strength apply when it is on)
+  $('model').disabled = policy.has('model') || !siteOn;
   // not while the user is dragging it (the refresh would pull the thumb back)
   if (document.activeElement !== $('strength')) {
     $('strength').value = String(s.strength);
     $('strengthV').textContent = `${s.strength}%`;
     $('strength').setAttribute('aria-valuetext', `${s.strength}%`);
   }
-  $('strength').disabled = policy.has('strength');
+  $('strength').disabled = policy.has('strength') || !siteOn;
   $('managed').hidden = r.policy.length === 0;
 
   const on = !!st && (st.active ?? 0) > 0;
-  $('meter').hidden = !on;
-  if (on) meter.connect(); else meter.reset();
-  $('mic').classList.toggle('live', !!(on && st.speaking));
-  $('mic').classList.toggle('on', !!on);
+  // the meter and the speaking light only while Parla cleans this call (off mid-call: the plain microphone passes)
+  const cleaning = on && siteOn && st!.enabled !== false;
+  $('meter').hidden = !cleaning;
+  if (cleaning) meter.connect(); else meter.reset();
+  $('mic').classList.toggle('live', !!(cleaning && st!.speaking));
+  $('mic').classList.toggle('on', cleaning);
   if (!usable) say('state', '');
   else if (on) {
     const mode = t(st!.mode === 'isolated' ? 'ext.modeIsolated' : 'ext.modePage');

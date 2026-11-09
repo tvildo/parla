@@ -3,16 +3,21 @@
 // that holds only noise (lib.ts fakeMic). Test pages are served by request routing (no server): /plain.html
 // (no CSP) and /strict.html with a Teams-like CSP (scripts only from self / nonce, no eval, no WebAssembly).
 //   - a site switched off gets the untouched microphone (and gives the input level for the other tests)
-//   - plain page: the in-page engine removes the noise, the track looks like the microphone, video passes
+//   - plain page: the in-page engine removes the noise, the track looks like the microphone, video passes; the
+//     browser's echo cancellation runs even when the site turns it off (the site still sees its own choice)
 //   - strict page: the page can't compile WebAssembly -> isolated mode (extension-origin worker), same result
-//   - live control: switching the site off mid-stream passes the input through (no restart)
+//   - live control: switching the site off mid-stream passes the input through (no restart); the popup then shows
+//     no meter and greys out quality and strength
 //   - stopping the returned track ends the session; one microphone opened twice is processed once
 //   - an update waits until the call ends; a reload mid-call never leaves the site in silence
+//   - popup meter on speakers: the other side's voice coming back (echo gate) is not shown as the user's; with a real
+//     RTCPeerConnection call the extension finds the incoming audio and the call keeps working
 import { test, expect, chromium, type BrowserContext, type Page } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { ROOT, fakeMic, rms } from './lib';
+import { EchoGate } from '../src/extension/src/echo_gate.ts';
 
 const tr = (code: string) => JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'i18n', `${code}.json`), 'utf8'));
 
@@ -36,7 +41,7 @@ window.capture = async (seconds, constraints = { audio: true }) => {
   window.__track = t;
   const b = new Uint8Array(out.buffer); let bin = '';
   for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
-  return { audio: btoa(bin), label: t.label, settings: t.getSettings(), video: s.getVideoTracks().map((v) => v.label), wrapped: !!window.__viExtension };
+  return { audio: btoa(bin), label: t.label, settings: t.getSettings(), constraints: t.getConstraints(), video: s.getVideoTracks().map((v) => v.label), wrapped: !!window.__viExtension };
 };
 window.canCompileWasm = async () => { try { await WebAssembly.compile(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0])); return true; } catch { return false; } };
 `;
@@ -119,6 +124,9 @@ test('plain page: in-page engine removes the noise, looks like the microphone, v
   expect(out, 'noise removed').toBeLessThan(inputLevel / 5);
   expect(r.label).not.toMatch(/MediaStreamAudioDestination/i);
   expect(r.settings.deviceId).toBeTruthy();
+  // the site turned the browser's echo cancellation off: it runs anyway (before the engine), the site sees its choice
+  expect(r.constraints.echoCancellation, 'browser echo cancellation on under Parla').toBe(true);
+  expect(r.settings.echoCancellation, 'the site sees what it asked for').toBe(false);
   expect(r.video.length).toBe(1);
   expect(r.errors).toEqual([]);
   await p.close();
@@ -178,14 +186,90 @@ test('popup meter: shows how much quieter the noise is, in both engine modes; st
   await settings({});
 });
 
+test('echo gate: the other side coming back through the speakers shows as background noise, the user talking over them shows', () => {
+  const g = new EchoGate();
+  // 2 s of the user's pauses, no call audio: background noise, shown as it is
+  for (let i = 0; i < 40; i++) expect(g.step({ inDb: -60, outDb: -80, speaking: false }, -120).echo).toBe(false);
+  // the other side talks (incoming -20 dBFS); their echo reaches the microphone at -45 and the engine keeps it as a voice
+  const first = g.step({ inDb: -45, outDb: -47, speaking: true }, -20);
+  expect(first, 'an echo from the first moment (the gate starts by assuming a loud echo)').toMatchObject({ echo: true, speaking: false });
+  let shown = first;
+  for (let i = 0; i < 200; i++) shown = g.step({ inDb: -45, outDb: -47, speaking: true }, -20);
+  expect(shown).toMatchObject({ echo: true, speaking: false });
+  expect(shown.inDb, 'shown as the background noise').toBeCloseTo(-60, 0);
+  expect(shown.outDb).toBeCloseTo(-80, 0);
+  expect(g.coupling, 'learned: their echo is 25 dB under what they send').toBeCloseTo(-25, 0);
+  // the user talks over them, far louder than the echo: shown
+  expect(g.step({ inDb: -25, outDb: -26, speaking: true }, -20)).toMatchObject({ echo: false, speaking: true, inDb: -25 });
+  // they stop: within the hold (~0.4 s, the echo's delay and tail) still an echo, then the user's speech shows again
+  expect(g.step({ inDb: -45, outDb: -47, speaking: true }, -120).echo).toBe(true);
+  for (let i = 0; i < EchoGate.HOLD; i++) g.step({ inDb: -60, outDb: -80, speaking: false }, -120);
+  expect(g.step({ inDb: -45, outDb: -47, speaking: true }, -120)).toMatchObject({ echo: false, speaking: true });
+  // headphones: no echo, the microphone during their speech is just background noise; the user still shows
+  const h = new EchoGate();
+  for (let i = 0; i < 200; i++) h.step({ inDb: -60, outDb: -80, speaking: false }, -20);
+  expect(h.step({ inDb: -30, outDb: -31, speaking: true }, -20)).toMatchObject({ echo: false, speaking: true });
+});
+
+test('popup meter in a real call (RTCPeerConnection): the incoming audio is found, the call keeps working', async () => {
+  test.setTimeout(60_000);
+  await settings({ model: 'gtcrn', strength: 100 });
+  const id = new URL((await worker()).url()).host;
+  const p = await ctx.newPage();
+  const logs: string[] = [];
+  p.on('console', (m) => logs.push(m.text()));
+  await p.goto(`${ORIGIN}/plain.html`);
+  // a loopback call: a 440 Hz "other side" sent from one connection to another and played in an <audio> element
+  await p.evaluate(async () => {
+    const ac = new AudioContext();
+    const osc = ac.createOscillator(), dst = ac.createMediaStreamDestination(), g = ac.createGain();
+    g.gain.value = 0.3; osc.connect(g).connect(dst); osc.start();
+    const a = new RTCPeerConnection(), b = new RTCPeerConnection();
+    a.onicecandidate = (e) => { if (e.candidate) b.addIceCandidate(e.candidate); };
+    b.onicecandidate = (e) => { if (e.candidate) a.addIceCandidate(e.candidate); };
+    b.ontrack = (e) => { const el = new Audio(); el.srcObject = e.streams[0] ?? new MediaStream([e.track]); el.play(); (window as any).__el = el; };
+    a.addTrack(dst.stream.getAudioTracks()[0], dst.stream);
+    await a.setLocalDescription(await a.createOffer()); await b.setRemoteDescription(a.localDescription!);
+    await b.setLocalDescription(await b.createAnswer()); await a.setRemoteDescription(b.localDescription!);
+    (window as any).__pc = b;
+  });
+  expect(await p.evaluate(() => RTCPeerConnection.prototype.setRemoteDescription.name)).toBe('setRemoteDescription');
+  const rec = p.evaluate(() => (window as any).capture(10, { audio: { echoCancellation: false, autoGainControl: false } }));
+  const tabId = await (await worker()).evaluate(async (u) => (await chrome.tabs.query({ url: `${u}/*` }))[0]?.id, `${ORIGIN}/plain.html`);
+  const pop = await ctx.newPage();
+  await pop.goto(`chrome-extension://${id}/popup.html?tab=${tabId}`);
+  await expect(pop.locator('#meter')).toBeVisible({ timeout: 15_000 });
+  await expect.poll(() => logs.some((l) => l.includes("[vi] popup meter: the call's incoming audio as the echo reference")), { timeout: 15_000 }).toBe(true);
+  expect(await p.evaluate(() => (window as any).__pc.connectionState)).toBe('connected');
+  expect(await pop.locator('#mic').getAttribute('class'), 'the other side is not shown as the user speaking').not.toContain('live');
+  await pop.close();
+  await rec;
+  await p.close();
+  await settings({});
+});
+
 test('live off mid-stream passes the input through', async () => {
   await settings({ model: 'gtcrn', strength: 100 });
   const p = await ctx.newPage();
   await p.goto(`${ORIGIN}/plain.html`);
   const rec = capture(p, 9, { audio: RAW });
   await expect.poll(async () => (await status()).some((s: any) => s.origin === ORIGIN && s.active > 0), { timeout: 15_000 }).toBe(true);
-  await p.waitForTimeout(3000);
+  // the popup while it cleans: meter, quality and strength
+  const id = new URL((await worker()).url()).host;
+  const tabId = await (await worker()).evaluate(async (u) => (await chrome.tabs.query({ url: `${u}/*` }))[0]?.id, `${ORIGIN}/plain.html`);
+  const pop = await ctx.newPage();
+  await pop.goto(`chrome-extension://${id}/popup.html?tab=${tabId}`);
+  await expect(pop.locator('#meter')).toBeVisible({ timeout: 10_000 });
+  await expect(pop.locator('#model')).toBeEnabled();
+  await expect(pop.locator('#strength')).toBeEnabled();
+  await p.waitForTimeout(3000);   // the "on" part measured below ends at 3 s
   await (await worker()).evaluate((o) => chrome.storage.sync.set({ sites: { [o]: 'off' } }), ORIGIN);
+  // switched off mid-call: nothing moves or can be set until it is on again
+  await expect(pop.locator('#meter')).toBeHidden({ timeout: 5_000 });
+  await expect(pop.locator('#model')).toBeDisabled();
+  await expect(pop.locator('#strength')).toBeDisabled();
+  await expect(pop.locator('#mic')).not.toHaveClass(/live/);
+  await pop.close();
   const r = await rec;
   const on = rms(r.audio, 1.5, 3), off = rms(r.audio, 6.5, 9);
   console.log(JSON.stringify({ on: +on.toFixed(4), off: +off.toFixed(4), input: +inputLevel.toFixed(4) }));
