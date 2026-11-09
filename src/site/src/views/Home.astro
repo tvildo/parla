@@ -22,8 +22,8 @@ const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack 
       <h1>{t("site.hero1")}<br><span class="grad">{t("site.hero2")}</span></h1>
       <p class="lead">{t("site.lead")}</p>
       <div class="actions">
-        <a class="btn primary" href={`${here}demo/`}>{t("site.ctaTry")}</a>
-        <a class="btn" href={`${here}install/`}>{t("site.ctaGet")}</a>
+        <a class="btn primary" href={`${here}install/`}>{t("site.ctaGet")}</a>
+        <a class="btn" href={`${here}demo/`}>{t("site.ctaTry")}</a>
       </div>
       <p class="note">{t("site.note")}</p>
       <div class="wave" aria-hidden="true">{Array.from({ length: 21 }, (_, i) => <i style={`animation-delay:${(Math.sin(i / 3) * 0.6 + i * 0.06).toFixed(2)}s`}></i>)}</div>
