@@ -50,6 +50,8 @@ Free · Open source · No account · No sign-up
 - **Chrome, Edge, Brave, Opera**: [Chrome Web Store](https://chromewebstore.google.com/detail/iifachdagbndcbloopehiagjopjkohei)
 - **Firefox** (140+): [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/parla-ai-noise-suppression/)
 - **Safari** (macOS, iPhone, iPad): coming to the App Store
+- **Your own app** (npm): `npm install @tvildo/parla` (the engine and the AI models in one package; how to use it:
+  [For developers](#for-developers))
 
 Free, no account, and it updates itself. You can also load the files of the
 [latest release](https://github.com/tvildo/parla/releases/latest) yourself:
@@ -66,6 +68,10 @@ default, per-site choices, where the engine runs), **Language** and **Privacy**.
 
 Build your own noise-cancellation app with the same engine. The npm package contains everything — the engine and
 the AI models — and runs on the user's device:
+
+```sh
+npm install @tvildo/parla
+```
 
 ```js
 import { Parla } from '@tvildo/parla';
@@ -86,9 +92,10 @@ also has the npm package and the SDK as plain files to download.
 
 Your voice is processed on your device and never uploaded. There is no account. The extension sends nothing unless
 you turn on its anonymous technical reports (errors and performance, nothing about you or the pages you visit) in its
-settings, to help fix problems. Detailed diagnostics (which site a problem happened on: its domain only) are off
-too unless you turn them on. The website has no cookies or trackers. Details: [privacy](https://parla.cc/privacy/),
-[what exactly is sent](docs/telemetry.md).
+settings. They exist for one reason: if Parla ever fails on your computer (an error, a crash, a call without
+sound), turning them on is the easiest way to let us know: one switch, no bug report to write. Detailed diagnostics
+(which site a problem happened on: its domain only) are off too unless you turn them on. The website has no cookies
+or trackers. Details: [privacy](https://parla.cc/privacy/), [what exactly is sent](docs/telemetry.md).
 
 ## Contributing
 

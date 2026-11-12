@@ -3,6 +3,12 @@
 The browser extension can send small reports so problems on real machines can be found and fixed, **only if the user
 turns them on**: out of the box it sends nothing. The website and the npm package send nothing.
 
+**Why it exists.** Parla runs on the user's computer, so when something goes wrong there (an error, a crash, a call
+left without sound) nobody else can see it. Turning the reports on is the easiest way for someone who is stuck to tell
+us: one switch in the settings, no bug report to write, and the report carries the technical details (which step
+failed, the browser, the quality level, timings) needed to fix it for them and everyone else. That is why the
+settings and the privacy page say so right next to the switch.
+
 ## The two switches
 
 In the extension's settings, section **Privacy** (companies can set both by policy: `telemetry`, `diagnostics`):
