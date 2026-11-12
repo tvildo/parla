@@ -103,6 +103,8 @@ fieldset:disabled .choice { cursor: default; }
 /* no microphone: only the reason and a retry */
 .demo-error { max-width: 560px; margin: 32px auto 0; text-align: start; }
 .demo-error p { color: #ffb4b4; }
+.demo-one.demo-error { text-align: center; justify-items: center; }
+.demo-error .actions { justify-content: center; margin-top: 0; }
 
 /* one card: meters, quality + strength, buttons, recording */
 .demo-one { max-width: 720px; margin: 32px auto 0; text-align: start; }

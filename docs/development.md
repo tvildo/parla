@@ -38,7 +38,7 @@ python build.py sdk                         # the SDK as plain files -> build/sd
 python build.py examples                    # examples/ on the packed package
 python build.py site                        # the website -> build/site/
 python build.py serve                       # http://127.0.0.1:8765/ (the website)
-python build.py screenshots                 # docs/images + the website's screenshots from the current builds
+python build.py screenshots                 # docs/images (+ store/: the store listing images) from the current builds
 ```
 
 `--version X.Y.Z` on `extension`, `npm` and `sdk` stamps a release version into the build (CI does it with the next

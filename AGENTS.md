@@ -88,8 +88,10 @@ runs on the user's device; the website (parla.cc) presents both. See `README.md`
   Everything technical (layout, build, tests, translations, models) is in `docs/` (`docs/development.md` for
   contributors; getting started, features, React, npm, API, extension, accessibility for SDK users).
 - Screenshots are generated, never hand-made: `python build.py screenshots` (`tests/screenshots.spec.ts`, local
-  Chromium for its fonts) writes `docs/images/*.png` and `src/site/src/assets/screenshots/` (the landing page's "See it"
-  section) from the current extension and site builds. The popup shows a made-up meeting page (`meet.example.org`)
+  Chromium for its fonts) writes `docs/images/*.png` (README, docs) and `docs/images/store/*.jpg` (1280x800, the Chrome / Firefox listings) from the current extension and site
+  builds. The website uses no screenshots: its "See it" section renders the real popup (`src/extension/src/popup.html` +
+  `ui.css`, texts from the page language) and the real demo card at build time (`src/site/src/components/previews.ts`);
+  the site build fails when the popup changes in a way the preview can't follow. The popup shows a made-up meeting page (`meet.example.org`)
   through `popup.html?tab=<id>`. Retake them after UI changes.
 
 ## Languages (i18n)

@@ -62,6 +62,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   by tvildo.
 
 ### Changed
+- Website demo: one button. "Record 8 seconds to compare" opens the microphone, records and closes the microphone
+  again, then shows the two takes and "Record again" (no separate "Start with my microphone" step, no Stop button); when the microphone can't be used, only the demo card turns into the reason and
+  a retry, the heading and text around it stay.
+- Website "See it": the extension popup and the demo are no longer English screenshots. They are the real popup
+  and demo card, drawn in the page's language (right-to-left too), built from the same code, so they stay up to date.
 - Releases: the extension, the SDK and the npm package get a new version only when something they ship changed; a
   change to the website alone (or docs, tests, CI) deploys the website and releases nothing else
   (docs/releasing.md).

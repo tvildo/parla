@@ -21,9 +21,26 @@ test('every language: landing, privacy, demo pages, translated, with the right d
     await page.goto(`${prefix(code)}privacy/`);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(t['privacy.h1']);
     await page.goto(`${prefix(code)}demo/`);
-    await expect(page.getByRole('button', { name: t['demo.start'] })).toBeVisible();
+    await expect(page.getByRole('button', { name: t['demo.record'].replace('{s}', '8') })).toBeVisible();
   }
   expect(errors).toEqual([]);
+});
+
+test('"See it" draws the real popup and demo card, translated, no pictures', async ({ page }) => {
+  for (const code of ['en', 'ka', 'ar']) {
+    const t = tr(code);
+    await page.goto(prefix(code));
+    const see = page.locator('#see');
+    await expect(see.locator('img, picture')).toHaveCount(0);
+    const popup = see.locator('.preview-popup');
+    await expect(popup).toHaveAttribute('aria-label', t['site.shots.popup']);
+    await expect(popup.locator('.title')).toHaveText(t['ext.title']);       // inside its shadow root
+    await expect(popup.locator('#siteOn')).toBeChecked();
+    await expect(popup.locator('.body')).toHaveAttribute('dir', LANGS.find((l) => l.code === code)!.dir);
+    const demo = see.locator('.preview-demo');
+    await expect(demo.locator('h2')).toHaveText(t['demo.yourMic']);
+    await expect(demo.getByRole('progressbar')).toHaveCount(1);
+  }
 });
 
 test('language menu switches to the same page in another language', async ({ page }) => {
@@ -46,13 +63,13 @@ test('the browser language is suggested once, never forced', async ({ browser })
   await ctx.close();
 });
 
-test('live demo (Georgian): engine on the microphone, strength, quality switch, recording with progress, two players', async ({ page }) => {
+test('live demo (Georgian): one button opens the microphone, records and closes it, two players, strength, quality switch, record again', async ({ page }) => {
   const t = tr('ka');
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('/ka/demo/');
-  await page.getByRole('button', { name: t['demo.start'] }).click();
+  await page.getByRole('button', { name: t['demo.record'].replace('{s}', '8') }).click();   // one button: microphone + recording
   const delay = new RegExp(t['demo.delay'].replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace('\\{ms\\}', '\\d+').replace('{ms}', '\\d+'));
   await expect(page.getByText(delay)).toBeVisible({ timeout: 30_000 });
   // one noise meter: the original and "with Parla" layers in one bar, and how much quieter the noise is
@@ -60,16 +77,11 @@ test('live demo (Georgian): engine on the microphone, strength, quality switch, 
   const quieter = new RegExp(`^${t['demo.quieter'].replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace('{n}', '([\\d.]+)')}$`);
   await expect.poll(async () => +(quieter.exec((await page.locator('.nmeter-value').textContent()) ?? '')?.[1] ?? 0), { timeout: 15_000 }).toBeGreaterThan(3);
   console.log(JSON.stringify({ meter: await page.locator('.nmeter-value').textContent(), dB: await page.locator('.nmeter-value').getAttribute('title') }));
-  const slider = page.getByRole('slider', { name: new RegExp(t['demo.ns']) });
-  await expect(slider).toHaveValue('100');
-  await slider.fill('60');
-  await expect(slider).toHaveAttribute('aria-valuetext', '60%');
-  await page.getByLabel(t['demo.quality']).selectOption('gtcrn');
-  await expect(page.getByText(delay)).toBeVisible({ timeout: 30_000 });
-  await page.getByRole('button', { name: t['demo.record'].replace('{s}', '8') }).click();
   await expect(page.getByRole('progressbar')).toBeVisible();
-  await expect(page.getByText(t['demo.left'].replace('{s}', '8'))).toBeVisible();
   await expect(page.getByRole('button', { name: t['demo.recordAgain'] })).toBeVisible({ timeout: 20_000 });
+  // the take is done: the microphone is closed (no delay shown, no stop button), the meter is empty
+  await expect(page.getByText(delay)).toHaveCount(0);
+  await expect(page.locator('.demo-one button')).toHaveCount(1);
   // two players: with Parla first, the original second
   await expect(page.locator('.players figcaption')).toHaveText([t['demo.withParla'], t['demo.original']]);
   const durations = await page.locator('.players audio').evaluateAll((els) => Promise.all(els.map((a) => new Promise<number>((res) => {
@@ -78,12 +90,21 @@ test('live demo (Georgian): engine on the microphone, strength, quality switch, 
     if (el.readyState >= 1) done(); else el.addEventListener('loadedmetadata', done, { once: true });
   }))));
   expect(durations.length).toBe(2);
-  await page.getByRole('button', { name: t['demo.stop'] }).click();
-  await expect(page.getByRole('button', { name: t['demo.start'] })).toBeVisible();
+  const slider = page.getByRole('slider', { name: new RegExp(t['demo.ns']) });
+  await expect(slider).toHaveValue('100');
+  await slider.fill('60');
+  await expect(slider).toHaveAttribute('aria-valuetext', '60%');
+  await page.getByLabel(t['demo.quality']).selectOption('gtcrn');
+  await page.getByRole('button', { name: t['demo.recordAgain'] }).click();
+  await expect(page.getByText(delay)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('progressbar')).toBeVisible();
+  await expect(page.getByText(t['demo.left'].replace('{s}', '8'))).toBeVisible();
+  await expect(page.getByRole('button', { name: t['demo.recordAgain'] })).toBeEnabled({ timeout: 20_000 });
+  await expect(page.getByText(delay)).toHaveCount(0);
   expect(errors.filter((e) => !/favicon/.test(e))).toEqual([]);
 });
 
-test('demo without microphone permission: only the reason and a retry', async ({ browser }) => {
+test('demo without microphone permission: the card becomes the reason and a retry', async ({ browser }) => {
   const ctx = await browser.newContext({ permissions: [] });
   const page = await ctx.newPage();
   await page.addInitScript(() => {
@@ -91,10 +112,12 @@ test('demo without microphone permission: only the reason and a retry', async ({
   });
   const t = tr('en');
   await page.goto('/demo/');
-  await page.getByRole('button', { name: t['demo.start'] }).click();
+  await page.getByRole('button', { name: t['demo.record'].replace('{s}', '8') }).click();
   await expect(page.getByRole('alert')).toContainText(t['demo.err.blocked']);
   await expect(page.getByRole('button', { name: t['demo.retry'] })).toBeVisible();
-  await expect(page.locator('.demo-grid')).toHaveCount(0);           // nothing else
+  await expect(page.locator('.demo-card')).toHaveCount(1);            // the card is replaced, nothing else
   await expect(page.getByRole('slider')).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.locator('.demo .lead')).toBeVisible();
   await ctx.close();
 });

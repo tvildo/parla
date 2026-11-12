@@ -3,8 +3,7 @@ import { Picture } from "astro:assets";
 import { STORES } from "../stores";
 import Base from "../layouts/Base.astro";
 import poster from "../assets/video-poster.jpg";
-import shotPopup from "../assets/screenshots/extension-popup.png";
-import shotDemo from "../assets/screenshots/demo.png";
+import { demoPreview, popupPreview } from "../components/previews";
 import { seg, translator } from "../i18n";
 
 interface Props { lang: string }
@@ -66,11 +65,11 @@ const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack 
       <h2>{t("site.shots.title")}</h2>
       <div class="shots">
         <figure class="shot shot-popup">
-          <Picture src={shotPopup} formats={["avif", "webp"]} widths={[340, 680]} sizes="340px" alt={t("site.shots.popup")} loading="lazy" decoding="async" />
+          <div class="preview preview-popup" role="img" aria-label={t("site.shots.popup")} inert set:html={popupPreview(t)} />
           <figcaption>{t("site.shots.popup")}</figcaption>
         </figure>
         <figure class="shot">
-          <Picture src={shotDemo} formats={["avif", "webp"]} widths={[564, 1128, 1600]} sizes="(max-width: 760px) calc(100vw - 48px), 564px" alt={t("site.shots.demo")} loading="lazy" decoding="async" />
+          <div class="preview preview-demo" role="img" aria-label={t("site.shots.demo")} inert set:html={demoPreview(t)} />
           <figcaption>{t("site.shots.demo")}</figcaption>
         </figure>
       </div>

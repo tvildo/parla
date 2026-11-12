@@ -26,24 +26,27 @@ for (const lang of ['en', 'ka', 'ar']) {
     await axe(page, `${lang} privacy`);
     await page.goto(`${p}demo/`);
     await axe(page, `${lang} demo idle`);
-    await page.getByRole('button', { name: tr(lang)['demo.start'] }).click();
-    await expect(page.getByRole('button', { name: tr(lang)['demo.stop'] })).toBeVisible({ timeout: 30_000 });
-    await axe(page, `${lang} demo running`);
+    await page.getByRole('button', { name: tr(lang)['demo.record'].replace('{s}', '8') }).click();
+    await expect(page.getByRole('progressbar')).toBeVisible({ timeout: 30_000 });
+    await axe(page, `${lang} demo recording`);
+    await expect(page.getByRole('button', { name: tr(lang)['demo.recordAgain'] })).toBeEnabled({ timeout: 20_000 });
+    await axe(page, `${lang} demo recorded`);
   });
 }
 
-test('demo by keyboard only: start, strength, quality, record', async ({ page }) => {
+test('demo by keyboard only: record, strength, quality, record again', async ({ page }) => {
   const t = tr('en');
   await page.goto('/demo/');
   // the skip link is the first stop and lands on the main content
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: t['site.skip'] })).toBeFocused();
-  const start = page.getByRole('button', { name: t['demo.start'] });
+  const start = page.getByRole('button', { name: t['demo.record'].replace('{s}', '8') });
   for (let i = 0; i < 30 && !(await start.evaluate((el) => el === document.activeElement)); i++) await page.keyboard.press('Tab');
   await expect(start).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('button', { name: t['demo.stop'] })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole('status')).toContainText(t['demo.started']);
+  await page.keyboard.press('Enter');   // microphone + recording
+  await expect(page.getByRole('status')).toContainText(t['demo.started'], { timeout: 30_000 });
+  const again = page.getByRole('button', { name: t['demo.recordAgain'] });
+  await expect(again).toBeEnabled({ timeout: 30_000 });
   // strength: a slider, arrow keys move it
   const slider = page.getByRole('slider', { name: new RegExp(t['demo.ns']) });
   await slider.focus();
@@ -54,10 +57,9 @@ test('demo by keyboard only: start, strength, quality, record', async ({ page })
   await quality.focus();
   await page.keyboard.press('ArrowDown');
   await expect(quality).toHaveValue('rnnoise');
-  await expect(page.getByRole('button', { name: t['demo.stop'] })).toBeEnabled({ timeout: 30_000 });
-  const rec = page.getByRole('button', { name: t['demo.record'].replace('{s}', '8') });
-  await expect(rec).toBeEnabled({ timeout: 30_000 });   // the new quality has loaded
-  await rec.focus();
+  await expect(again).toBeEnabled({ timeout: 30_000 });   // the new quality has loaded
+  await again.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('button', { name: t['demo.recordAgain'] })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('progressbar')).toBeVisible();
+  await expect(again).toBeEnabled({ timeout: 20_000 });
 });

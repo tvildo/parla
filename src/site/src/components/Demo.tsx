@@ -1,7 +1,8 @@
-// The live demo (a React island on /demo/ in every language), one card: microphone -> the SDK's engine, quality
-// (dropdown), noise suppression strength, and once the microphone runs an 8-second recording played back with and
-// without Parla. Strings come from the page
-// (demo.* keys of src/i18n/<lang>.json). Without microphone access there is nothing to show: only the error and a retry.
+// The live demo (a React island on /demo/ in every language), one card: one button opens the microphone (the SDK's
+// engine on it, live noise meter), records 8 seconds and closes it again; the two takes play back with and without
+// Parla. Quality (dropdown) and noise suppression strength apply to the next take (strength also live). Strings come
+// from the page (demo.* keys of src/i18n/<lang>.json). Without microphone access the card is replaced by the error and
+// a retry (heading, lead and note stay). The same card, frozen mid-recording, is the home page's picture (DemoPreview).
 import { useEffect, useRef, useState } from "react";
 import { QUALITIES, Session, levelDb, meterScale, type Model } from "./audio";
 
@@ -20,59 +21,48 @@ export default function Demo({ strings }: { strings: Strings }) {
   const [model, setModel] = useState<Model>("deepfilternet3");
   const [strength, setStrength] = useState(100);
   const [speaking, setSpeaking] = useState(false);
-  const [switching, setSwitching] = useState(false);
-  const [stopped, setStopped] = useState(false);
   const session = useRef<Session | null>(null);
   // recording: elapsed seconds while it runs (null otherwise), the two takes when done
-  const [rec, setRec] = useState<{ elapsed: number | null; urls: { original: string; cleaned: string } | null }>({ elapsed: null, urls: null });
+  const [rec, setRec] = useState<Rec>({ elapsed: null, urls: null });
 
   const mounted = useRef(true);
-  useEffect(() => () => { mounted.current = false; session.current?.stop(); }, []);
+  useEffect(() => () => { mounted.current = false; session.current?.stop(); session.current = null; }, []);
   useEffect(() => () => { if (rec.urls) { URL.revokeObjectURL(rec.urls.original); URL.revokeObjectURL(rec.urls.cleaned); } }, [rec.urls]);
 
+  /** the one button: opens the microphone, records RECORD_S seconds, closes the microphone, shows the two takes */
   async function record() {
-    const s = session.current;
+    const s = await start();
     if (!s) return;
     setRec({ elapsed: 0, urls: null });
-    const urls = await s.record(RECORD_S, (elapsed) => setRec((r) => ({ ...r, elapsed })));
-    setRec({ elapsed: null, urls });
+    try {
+      const urls = await s.record(RECORD_S, (elapsed) => { if (session.current === s) setRec((r) => ({ ...r, elapsed })); });
+      if (mounted.current && session.current === s) setRec({ elapsed: null, urls });
+      else { URL.revokeObjectURL(urls.original); URL.revokeObjectURL(urls.cleaned); }
+    } catch (e) {
+      if (mounted.current && session.current === s) { setRec({ elapsed: null, urls: null }); setPhase({ kind: "error", message: explain(e, t) }); }
+    } finally {
+      if (session.current === s) { s.stop(); session.current = null; if (mounted.current) setPhase((p) => (p.kind === "running" ? { kind: "idle" } : p)); }
+    }
   }
 
-  async function start() {
+  async function start(): Promise<Session | null> {
     setPhase({ kind: "starting" });
-    setStopped(false);
     let s: Session | null = null;
     try {
       s = await Session.start();
-      if (!mounted.current) { s.stop(); return; }   // left the page while the microphone was opening
+      if (!mounted.current) { s.stop(); return null; }   // left the page while the microphone was opening
       session.current = s;
       s.onVoice = setSpeaking;
       s.setStrength(strength / 100);
       const latencyMs = await s.use(model);
-      if (session.current !== s) return;   // stopped meanwhile
+      if (!mounted.current) return null;
       setPhase({ kind: "running", latencyMs });
+      return s;
     } catch (e) {
       s?.stop();
-      if (!mounted.current || (s && session.current !== s)) return;   // gone or stopped meanwhile: nothing to show
       session.current = null;
-      setPhase({ kind: "error", message: explain(e, t) });
-    }
-  }
-
-  async function choose(m: Model) {
-    setModel(m);
-    const s = session.current;
-    if (!s || phase.kind !== "running") return;
-    setSwitching(true);
-    try {
-      const latencyMs = await s.use(m);
-      if (session.current === s) setPhase({ kind: "running", latencyMs });
-    } catch (e) {
-      if (session.current !== s) return;   // stopped while the model loaded
-      stop();
-      setPhase({ kind: "error", message: explain(e, t) });
-    } finally {
-      if (mounted.current) setSwitching(false);
+      if (mounted.current) setPhase({ kind: "error", message: explain(e, t) });
+      return null;
     }
   }
 
@@ -81,79 +71,94 @@ export default function Demo({ strings }: { strings: Strings }) {
     session.current?.setStrength(v / 100);
   }
 
-  function stop() {
-    session.current?.stop();
-    session.current = null;
-    setRec({ elapsed: null, urls: null });
-    setStopped(true);
-    setPhase({ kind: "idle" });
-  }
-
   const running = phase.kind === "running";
   const sess = session.current;
-
-  // no microphone (no permission, no device, an unsupported browser): the demo can't do anything else
-  if (phase.kind === "error") {
-    return (
-      <main className="demo">
-        <h1>{t("h1a")} <span className="grad">{t("h1b")}</span></h1>
-        <section className="card demo-card demo-error" role="alert">
-          <p>{phase.message}</p>
-          <div className="actions left">
-            <button className="btn primary" onClick={start}>{t("retry")}</button>
-          </div>
-        </section>
-      </main>
-    );
-  }
 
   return (
     <main className="demo">
       <h1>{t("h1a")} <span className="grad">{t("h1b")}</span></h1>
       <p className="lead">{t("lead")}</p>
 
-      <section className="card demo-card demo-one" aria-labelledby="demo-mic">
-        <h2 id="demo-mic">{t("yourMic")}</h2>
-        <p className="sr-only" role="status">{running ? t("started") : phase.kind === "starting" ? t("starting") : stopped ? t("stopped") : ""}</p>
-        <NoiseMeter inNode={running ? sess?.inMeter ?? null : null} outNode={running ? sess?.outMeter ?? null : null} speaking={running && speaking} t={t} />
-
-        <div className="controls">
-          <div className="field">
-            <label htmlFor="demo-quality">{t("quality")}</label>
-            <select id="demo-quality" value={model} disabled={switching || rec.elapsed !== null} onChange={(e) => choose(e.target.value as Model)}>
-              {QUALITIES.map((q) => <option key={q.model} value={q.model}>{t(`q.${q.label}`)} · {t(`q.${q.detail}`)}</option>)}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="demo-strength">{t("ns")} <span className="muted">{strength}%</span></label>
-            <input id="demo-strength" type="range" min={0} max={100} step={5} value={strength}
-              aria-valuetext={`${strength}%`} onChange={(e) => changeStrength(+e.target.value)} />
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="actions left">
-            {!running && (
-              <button className="btn primary" onClick={start} disabled={phase.kind === "starting"}>{phase.kind === "starting" ? t("starting") : t("start")}</button>
-            )}
-            {running && (
-              <>
-                <button className="btn" onClick={stop} disabled={rec.elapsed !== null}>{t("stop")}</button>
-                <button className={rec.urls ? "btn" : "btn primary"} onClick={record} disabled={rec.elapsed !== null || switching}>
-                  <span className="rec-dot" aria-hidden="true" />{rec.urls ? t("recordAgain") : t("record", { s: RECORD_S })}
-                </button>
-              </>
-            )}
-          </div>
-          {running && <span className="muted small">{switching ? t("loading") : t("delay", { ms: Math.round(phase.latencyMs) })}</span>}
-        </div>
-
-        {rec.elapsed !== null && <Progress elapsed={rec.elapsed} t={t} />}
-        {rec.elapsed === null && rec.urls && <Players urls={rec.urls} t={t} />}
-      </section>
+      <Card t={t} phase={phase} model={model} strength={strength} speaking={speaking} rec={rec}
+        inNode={running ? sess?.inMeter ?? null : null} outNode={running ? sess?.outMeter ?? null : null}
+        onRecord={record} onModel={setModel} onStrength={changeStrength} />
 
       <p className="note">{t("note")}</p>
     </main>
+  );
+}
+
+type Rec = { elapsed: number | null; urls: { original: string; cleaned: string } | null };
+interface CardProps {
+  t: T; phase: Phase; model: Model; strength: number; speaking: boolean; rec: Rec;
+  inNode: AnalyserNode | null; outNode: AnalyserNode | null;
+  onRecord: () => void; onModel: (m: Model) => void; onStrength: (v: number) => void;
+  /** a fixed meter (the home page's preview, rendered without JavaScript) */
+  still?: Still;
+}
+
+/** the demo card: what the live demo shows, and (with fixed state) the home page's preview of it */
+function Card({ t, phase, model, strength, speaking, rec, inNode, outNode, onRecord, onModel, onStrength, still }: CardProps) {
+  const running = phase.kind === "running";
+  // no microphone (no permission, no device, an unsupported browser): the card is only the reason and a retry
+  if (phase.kind === "error") {
+    return (
+      <section className="card demo-card demo-one demo-error" role="alert">
+        <p>{phase.message}</p>
+        <div className="actions">
+          <button className="btn primary" onClick={onRecord}>{t("retry")}</button>
+        </div>
+      </section>
+    );
+  }
+  return (
+    <section className="card demo-card demo-one" aria-labelledby="demo-mic">
+      <h2 id="demo-mic">{t("yourMic")}</h2>
+      <p className="sr-only" role="status">{running ? t("started") : phase.kind === "starting" ? t("starting") : ""}</p>
+      <NoiseMeter inNode={inNode} outNode={outNode} speaking={running && speaking} still={still} t={t} />
+
+      <div className="controls">
+        <div className="field">
+          <label htmlFor="demo-quality">{t("quality")}</label>
+          <select id="demo-quality" value={model} disabled={phase.kind === "starting" || rec.elapsed !== null} onChange={(e) => onModel(e.target.value as Model)}>
+            {QUALITIES.map((q) => <option key={q.model} value={q.model}>{t(`q.${q.label}`)} · {t(`q.${q.detail}`)}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="demo-strength">{t("ns")} <span className="muted">{strength}%</span></label>
+          <input id="demo-strength" type="range" min={0} max={100} step={5} value={strength}
+            aria-valuetext={`${strength}%`} onChange={(e) => onStrength(+e.target.value)} />
+        </div>
+      </div>
+
+      <div className="row">
+        <div className="actions left">
+          <button className="btn primary" onClick={onRecord}
+            disabled={phase.kind === "starting" || rec.elapsed !== null}>
+            <span className="rec-dot" aria-hidden="true" />
+            {phase.kind === "starting" ? t("starting") : rec.urls ? t("recordAgain") : t("record", { s: RECORD_S })}
+          </button>
+        </div>
+        {running && <span className="muted small">{t("delay", { ms: Math.round(phase.latencyMs) })}</span>}
+      </div>
+
+      {rec.elapsed !== null && <Progress elapsed={rec.elapsed} t={t} />}
+      {rec.elapsed === null && rec.urls && <Players urls={rec.urls} t={t} />}
+    </section>
+  );
+}
+
+/**
+ * The home page's picture of the demo: the real card, mid-recording, rendered to static HTML at build time (so it
+ * follows every change to the card, in every language). Not interactive: the page marks it inert.
+ */
+export function DemoPreview({ strings }: { strings: Strings }) {
+  const t = translator(strings);
+  const none = () => {};
+  return (
+    <Card t={t} phase={{ kind: "running", latencyMs: 40 }} model="deepfilternet3" strength={100} speaking
+      rec={{ elapsed: 5, urls: null }} inNode={null} outNode={null} onRecord={none} onModel={none} onStrength={none}
+      still={{ in: 0.8, out: 0.22, text: t("quieter", { n: 6 }) }} />
   );
 }
 
@@ -164,10 +169,11 @@ export default function Demo({ strings }: { strings: Strings }) {
  * is silence to the ear, and noise-only input would read thousands). Same meter as the extension's popup.
  */
 const MAX_DB = 40;
-function NoiseMeter({ inNode, outNode, speaking, t }: { inNode: AnalyserNode | null; outNode: AnalyserNode | null; speaking: boolean; t: T }) {
+type Still = { in: number; out: number; text: string };
+function NoiseMeter({ inNode, outNode, speaking, still, t }: { inNode: AnalyserNode | null; outNode: AnalyserNode | null; speaking: boolean; still?: Still; t: T }) {
   const inBar = useRef<HTMLDivElement>(null);
   const outBar = useRef<HTMLDivElement>(null);
-  const [text, setText] = useState("—");
+  const [text, setText] = useState(still?.text ?? "—");
   const [db, setDb] = useState<number | null>(null);
   const talk = useRef({ speaking, since: 0 });
   talk.current.speaking = speaking;
@@ -212,8 +218,8 @@ function NoiseMeter({ inNode, outNode, speaking, t }: { inNode: AnalyserNode | n
         <span className="nmeter-value" title={db !== null ? `−${db} dB` : undefined}>{text}</span>
       </div>
       <div className="nmeter-track">
-        <div className="nmeter-bar in" ref={inBar} role="meter" aria-label={t("original")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={0} />
-        <div className="nmeter-bar out" ref={outBar} role="meter" aria-label={t("withParla")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={0} />
+        <div className="nmeter-bar in" ref={inBar} style={still && { transform: `scaleX(${still.in})` }} role="meter" aria-label={t("original")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={0} />
+        <div className="nmeter-bar out" ref={outBar} style={still && { transform: `scaleX(${still.out})` }} role="meter" aria-label={t("withParla")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={0} />
       </div>
       <div className="nmeter-legend" aria-hidden="true">
         <span><i className="key in" />{t("original")}</span>

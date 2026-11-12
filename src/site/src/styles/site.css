@@ -116,6 +116,9 @@ footer.foot a { color: var(--faint); }
 .shots { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 28px; }
 .shot { margin: 0; display: grid; gap: 12px; }
 .shot img { width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 24px 60px -24px #000c; background: var(--bg); }
+/* the previews (src/components/previews.ts): the real popup and demo card, framed like the screenshots were */
+.preview { border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 24px 60px -24px #000c; overflow: hidden; user-select: none; }
+.preview-popup { width: 340px; max-width: 100%; }
 .shot figcaption { color: var(--muted); font-size: 15px; }
 @media (max-width: 760px) { .shots { grid-template-columns: 1fr; } .shot-popup { max-width: 340px; } }
 

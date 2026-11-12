@@ -39,7 +39,7 @@ Free · Open source · No account · No sign-up
 
 **Hear the difference: the live demo**
 
-![The live demo with two recordings, with and without Parla](docs/images/demo.png)
+![The live demo while it records, its noise meter live](docs/images/demo.png)
 
 </td>
 </tr>
