@@ -1,6 +1,5 @@
 ---
 import { Picture } from "astro:assets";
-import { STORES } from "../stores";
 import Base from "../layouts/Base.astro";
 import poster from "../assets/video-poster.jpg";
 import { demoPreview, popupPreview } from "../components/previews";
@@ -11,7 +10,6 @@ const { lang } = Astro.props;
 const t = translator(lang);
 const here = `/${seg(lang)}`;
 const cards = ["ai", "any", "quality", "safe"];
-const version = process.env.PARLA_VERSION || "";   // the release this site was built with (build.py site)
 const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack huddles", t("site.how.anyApp")];
 ---
 <Base lang={lang} page="" title={t("site.title")} description={t("site.description")}>
@@ -73,17 +71,6 @@ const apps = ["Google Meet", "Microsoft Teams", "Zoom (web)", "Discord", "Slack 
           <figcaption>{t("site.shots.demo")}</figcaption>
         </figure>
       </div>
-    </section>
-
-    <section id="install">
-      <h2>{t("site.install.title")}</h2>
-      <p class="sub">{t("site.install.sub")}</p>
-      <div class="actions start">
-        <a class="btn primary" href={STORES.chrome}>{t("site.install.chrome")}</a>
-        <a class="btn primary" href={STORES.firefox}>{t("site.install.firefox")}</a>
-        <a class="btn" href={`${here}install/`}>{t("site.install.go")}</a>
-      </div>
-      {version && <p class="note"><a href={`https://github.com/tvildo/parla/releases/tag/v${version}`}>{t("install.version", { version: `v${version}` })}</a></p>}
     </section>
 
     <section id="open">

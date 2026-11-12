@@ -1,9 +1,12 @@
 ---
-// How to install the extension, per browser: from the store first (it updates itself), the current release's files
-// on GitHub as the other way (their names carry the version: build.py passes it as PARLA_VERSION).
+// Install Parla: the extension per browser, from the store first (it updates itself), the current release's files on
+// GitHub as the other way (their names carry the version: build.py passes it as PARLA_VERSION); then the npm package
+// for apps. Each card shows the icons of what it is for (components/icons.ts); a small script finds the visitor's
+// browser, marks its card ("Your browser") and puts it first. Without scripts the page is the same, unmarked.
 import Base from "../layouts/Base.astro";
 import { seg, translator } from "../i18n";
 import { STORES } from "../stores";
+import { icon, type IconName } from "../components/icons";
 
 interface Props { lang: string }
 const { lang } = Astro.props;
@@ -15,10 +18,13 @@ const version = process.env.PARLA_VERSION || "";
 const file = (browser: string) => `parla-${browser}-v${version}.zip`;
 const download = (browser: string) => (version ? `${REPO}/releases/download/v${version}/${file(browser)}` : `${REPO}/releases/latest`);
 const code = (s: string) => `<code>${s}</code>`;
+const icons = (names: IconName[]) => names.map((n) => icon(n, 22)).join("");
 const browsers = [
-  { id: "chrome", name: "Chrome · Edge · Brave · Opera", store: STORES.chrome, add: t("site.install.chrome"), how: t("install.store.chrome"),
+  { id: "chrome", name: "Chrome · Edge · Brave · Opera", icons: icons(["chrome", "brave", "opera"]), store: STORES.chrome,
+    add: t("site.install.chrome"), addIcon: icon("chrome"), how: t("install.store.chrome"),
     steps: t("install.chrome", { ext: code("chrome://extensions"), edge: code("edge://extensions") }) },
-  { id: "firefox", name: "Firefox", store: STORES.firefox, add: t("site.install.firefox"), how: t("install.store.firefox"),
+  { id: "firefox", name: "Firefox", icons: icons(["firefox"]), store: STORES.firefox,
+    add: t("site.install.firefox"), addIcon: icon("firefox"), how: t("install.store.firefox"),
     steps: t("install.firefox", { url: code("about:debugging") }) },
 ];
 ---
@@ -28,29 +34,60 @@ const browsers = [
     <p class="lead">{t("install.lead")}</p>
     {version && <p class="note version"><a href={`${REPO}/releases/tag/v${version}`}>{t("install.version", { version: `v${version}` })}</a></p>}
 
-    {browsers.map((b) => (
-      <section class="card browser" id={b.id}>
-        <h2>{b.name}</h2>
-        <p>{b.how}</p>
-        <div class="actions start">
-          <a class="btn primary" href={b.store}>{b.add}</a>
-        </div>
-        <details class="manual">
-          <summary>{t("install.manual")}</summary>
-          <p set:html={b.steps} />
+    <div class="browsers">
+      {browsers.map((b) => (
+        <section class="card browser" id={b.id}>
+          <p class="yours" hidden>{t("install.yours")}</p>
+          <h2><span class="icons" set:html={b.icons} />{b.name}</h2>
+          <p>{b.how}</p>
           <div class="actions start">
-            <a class="btn" href={download(b.id)} download>{t("install.download", { file: version ? file(b.id) : "" }).trim()}</a>
+            <a class="btn primary" href={b.store}><Fragment set:html={b.addIcon} />{b.add}</a>
           </div>
-        </details>
-      </section>
-    ))}
+          <details class="manual">
+            <summary>{t("install.manual")}</summary>
+            <p set:html={b.steps} />
+            <div class="actions start">
+              <a class="btn" href={download(b.id)} download>{t("install.download", { file: version ? file(b.id) : "" }).trim()}</a>
+            </div>
+          </details>
+        </section>
+      ))}
 
-    <section class="card browser" id="safari">
-      <h2>Safari · Mac · iPhone · iPad</h2>
-      <p>{t("install.safari")}</p>
-    </section>
+      <section class="card browser" id="safari">
+        <p class="yours" hidden>{t("install.yours")}</p>
+        <h2><span class="icons" set:html={icons(["safari"])} />Safari · Mac · iPhone · iPad</h2>
+        <p>{t("install.safari")}</p>
+      </section>
+    </div>
 
     <p>{t("install.after")}</p>
+
+    <section class="card browser" id="npm">
+      <h2><span class="icons" set:html={icons(["node", "npm"])} />{t("install.npm.h")}</h2>
+      <p>{t("install.npm.p")}</p>
+      <pre class="cmd" dir="ltr"><code>npm install @tvildo/parla</code></pre>
+      <div class="actions start">
+        <a class="btn primary" href={`${REPO}/blob/master/docs/getting-started.md`}><Fragment set:html={icon("node")} />{t("install.npm.docs")}</a>
+        <a class="btn" href="https://www.npmjs.com/package/@tvildo/parla"><Fragment set:html={icon("npm")} />{t("install.npm.page")}</a>
+      </div>
+    </section>
     <p class="note"><a href={`${REPO}/releases`}>{t("install.releases")}</a> · <a href={`${here}privacy/`}>{t("site.nav.privacy")}</a></p>
   </main>
+  <script is:inline>
+    // the visitor's browser: Firefox; Safari (and every browser on iPhone / iPad: they all run Safari's engine);
+    // Chrome, Edge, Brave, Opera (Chromium, the Chrome Web Store). Android's Chrome has no extensions: nothing marked.
+    (() => {
+      const ua = navigator.userAgent;
+      const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const id = /Firefox\//.test(ua) && !ios ? "firefox"
+        : ios || (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\//.test(ua)) ? "safari"
+        : /Android/.test(ua) ? null
+        : /Chrome\/|Chromium\/|Edg\/|OPR\//.test(ua) ? "chrome" : null;
+      const card = id && document.getElementById(id);
+      if (!card) return;
+      card.classList.add("mine");
+      card.querySelector(".yours").hidden = false;
+      card.parentElement.prepend(card);
+    })();
+  </script>
 </Base>

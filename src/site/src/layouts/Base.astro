@@ -4,12 +4,31 @@
 import "../styles/site.css";
 import { LANGS, DEFAULT, seg, translator } from "../i18n";
 
-interface Props { lang: string; page: "" | "privacy/" | "demo/" | "install/"; title: string; description: string }
+interface Props { lang: string; page: "" | "privacy/" | "security/" | "demo/" | "install/"; title: string; description: string }
 const { lang, page, title, description } = Astro.props;
 const t = translator(lang);
 const here = `/${seg(lang)}`;
 const href = (code: string) => `/${seg(code)}${page}`;
 const [madeA, madeB] = t("site.footer.made").split("{author}");
+const REPO = "https://github.com/tvildo/parla";
+// the main menu: links, and groups that open a submenu (<details>, no script needed; the script below only closes
+// the others and closes on Escape / a click outside)
+type Item = { href: string; label: string; page?: Props["page"]; cta?: boolean };
+const menu: (Item | { group: string; items: Item[] })[] = [
+  { href: `${here}demo/`, label: t("site.nav.try"), page: "demo/" },
+  { href: `${here}#how`, label: t("site.nav.how") },
+  { group: t("site.nav.trust"), items: [
+    { href: `${here}privacy/`, label: t("site.nav.privacy"), page: "privacy/" },
+    { href: `${here}security/`, label: t("site.nav.security"), page: "security/" },
+  ] },
+  { group: t("site.nav.dev"), items: [
+    { href: `${REPO}/tree/master/docs`, label: t("site.nav.docs") },
+    { href: "https://www.npmjs.com/package/@tvildo/parla", label: t("site.nav.npm") },
+    { href: REPO, label: t("site.nav.source") },
+  ] },
+  { href: `${here}install/`, label: t("site.nav.install"), page: "install/", cta: true },
+];
+const current = (i: Item) => (i.page !== undefined && i.page === page ? "page" : undefined);
 ---
 <!doctype html>
 <html lang={lang} dir={t.dir}>
@@ -19,6 +38,11 @@ const [madeA, madeB] = t("site.footer.made").split("{author}");
 <title>{title}</title>
 <meta name="description" content={description}>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f6f6fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0c14" media="(prefers-color-scheme: dark)">
+<!-- the visitor's theme (System / Light / Dark menu below), applied before the first paint: no flash -->
+<script is:inline>document.documentElement.classList.add("js"); try { const t = localStorage.getItem("parla.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}</script>
 {LANGS.map((l) => <link rel="alternate" hreflang={l.code} href={new URL(href(l.code), Astro.site).href} />)}
 <link rel="alternate" hreflang="x-default" href={new URL(href(DEFAULT), Astro.site).href} />
 </head>
@@ -27,20 +51,34 @@ const [madeA, madeB] = t("site.footer.made").split("{author}");
 <div class="wrap">
   <header class="nav">
     <a class="brand" href={here}><span class="logo small" aria-hidden="true">P</span>Parla</a>
-    <nav class="nav-links" aria-label="Main">
-      <a href={`${here}demo/`}>{t("site.nav.try")}</a>
-      <a href={`${here}#how`}>{t("site.nav.how")}</a>
-      <a href={`${here}install/`}>{t("site.nav.install")}</a>
-      <a href={`${here}privacy/`}>{t("site.nav.privacy")}</a>
-      <a href="https://github.com/tvildo/parla/tree/master/docs">{t("site.nav.docs")}</a>
-      <a href="https://github.com/tvildo/parla">{t("site.nav.source")}</a>
-      <details class="langs">
+    <nav class="nav-links" id="mainnav" aria-label="Main">
+      {menu.map((m) => "group" in m
+        ? <details class="menu">
+            <summary class={m.items.some(current) ? "here" : undefined}>{m.group}</summary>
+            <ul>{m.items.map((i) => <li><a href={i.href} aria-current={current(i)}>{i.label}</a></li>)}</ul>
+          </details>
+        : <a href={m.href} class={m.cta ? "cta" : undefined} aria-current={current(m)}>{m.label}</a>)}
+    </nav>
+    <div class="nav-tools">
+      <details class="menu theme">
+        <summary aria-label={`${t("site.theme")}: ${t("site.theme.system")}`} data-label={t("site.theme")}>
+          <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5a7.5 7.5 0 0 1 0 15z" fill="currentColor"/></svg>
+        </summary>
+        <ul>
+          {(["system", "light", "dark"] as const).map((k) => <li><button type="button" data-theme-pick={k} aria-pressed={k === "system" ? "true" : "false"}>{t(`site.theme.${k}`)}</button></li>)}
+        </ul>
+      </details>
+      <details class="menu langs">
         <summary aria-label={`${t("site.nav.language")}: ${LANGS.find((l) => l.code === lang)?.name}`}>{LANGS.find((l) => l.code === lang)?.name}</summary>
         <ul>
           {LANGS.map((l) => <li><a href={href(l.code)} hreflang={l.code} lang={l.code} aria-current={l.code === lang ? "true" : undefined}>{l.name}</a></li>)}
         </ul>
       </details>
-    </nav>
+      <!-- phones: the main menu folds into a panel (site.css, the small-screen block) -->
+      <button type="button" class="menu-toggle" aria-expanded="false" aria-controls="mainnav" aria-label={t("site.nav.menu")}>
+        <svg viewBox="0 0 20 20" width="22" height="22" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
   </header>
 
   <div class="suggest" id="suggest" hidden>
@@ -53,7 +91,7 @@ const [madeA, madeB] = t("site.footer.made").split("{author}");
 
   <footer class="foot">
     <span>© Parla · parla.cc · {madeA}<a href="https://github.com/tvildo">tvildo</a>{madeB}</span>
-    <nav><a href={`${here}privacy/`}>{t("site.nav.privacy")}</a><a href="https://github.com/tvildo/parla">{t("site.nav.source")}</a><a href="/licenses.txt">{t("site.nav.licenses")}</a></nav>
+    <nav><a href={`${here}privacy/`}>{t("site.nav.privacy")}</a><a href={`${here}security/`}>{t("site.nav.security")}</a><a href={REPO}>{t("site.nav.source")}</a><a href="/licenses.txt">{t("site.nav.licenses")}</a></nav>
   </footer>
 </div>
 <script is:inline define:vars={{
@@ -90,6 +128,44 @@ const [madeA, madeB] = t("site.footer.made").split("{author}");
     }
   } catch { /* storage blocked: no suggestion */ }
   for (const a of document.querySelectorAll(".langs a")) a.addEventListener("click", () => { try { localStorage.setItem("parla.lang", a.hreflang); } catch {} });
+  // theme: System (no attribute, follows the OS) / Light / Dark, remembered in this browser
+  const themeMenu = document.querySelector("details.theme");
+  const showTheme = () => {
+    const cur = document.documentElement.dataset.theme || "system";
+    let name = "";
+    for (const b of themeMenu.querySelectorAll("[data-theme-pick]")) {
+      const on = b.dataset.themePick === cur;
+      b.setAttribute("aria-pressed", String(on));
+      if (on) name = b.textContent;
+    }
+    const s = themeMenu.querySelector("summary");
+    s.setAttribute("aria-label", `${s.dataset.label}: ${name}`);
+  };
+  for (const b of themeMenu.querySelectorAll("[data-theme-pick]")) b.addEventListener("click", () => {
+    const k = b.dataset.themePick;
+    if (k === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = k;
+    try { if (k === "system") localStorage.removeItem("parla.theme"); else localStorage.setItem("parla.theme", k); } catch {}
+    showTheme();
+    themeMenu.open = false;
+    themeMenu.querySelector("summary").focus();
+  });
+  showTheme();
+  // phones: the menu button opens / closes the main menu panel; a link, Escape or a tap outside closes it
+  const header = document.querySelector("header.nav");
+  const toggle = header.querySelector(".menu-toggle");
+  const setPanel = (open) => { header.classList.toggle("open", open); toggle.setAttribute("aria-expanded", String(open)); };
+  toggle.addEventListener("click", () => setPanel(!header.classList.contains("open")));
+  for (const a of header.querySelectorAll("#mainnav a")) a.addEventListener("click", () => setPanel(false));
+  document.addEventListener("click", (e) => { if (!header.contains(e.target)) setPanel(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && header.classList.contains("open")) { setPanel(false); toggle.focus(); } });
+  // menus: one open at a time; Escape or a click outside closes it (focus goes back to its title)
+  const menus = [...document.querySelectorAll("details.menu")];
+  for (const d of menus) d.addEventListener("toggle", () => { if (d.open) for (const o of menus) if (o !== d) o.open = false; });
+  document.addEventListener("click", (e) => { for (const d of menus) if (d.open && !d.contains(e.target)) d.open = false; });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    for (const d of menus) if (d.open) { d.open = false; d.querySelector("summary").focus(); }
+  });
 </script>
 </body>
 </html>

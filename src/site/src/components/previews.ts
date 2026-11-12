@@ -59,9 +59,16 @@ export function popupPreview(t: T): string {
   h = h.replace(/<(\/?)h[1-6]\b/g, "<$1div");
   // the page's <body> is a box here: its rules move to .body / .popup
   if ((uiCss.match(/:root \{/g) ?? []).length !== 2) fail("ui.css: expected two :root { rules (dark and light)");
-  // always the dark look (the site is dark): the light scheme's colours go
+  // the popup's dark and light colours become light-dark() pairs on the shadow host: the preview follows the page's
+  // theme (the color-scheme it inherits: the system's or the visitor's choice), like the popup follows the system
+  const vars = (block: string) => new Map([...block.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+  const dark = vars(/^:root \{([^}]*)\}/m.exec(uiCss)?.[1] ?? fail("ui.css: no top-level :root { block (dark)"));
+  const lightBlock = /@media \(prefers-color-scheme: light\) \{\s*:root \{([^}]*)\}\s*\}/.exec(uiCss) ?? fail("ui.css: no light-scheme :root block");
+  const light = vars(lightBlock[1]);
+  for (const k of light.keys()) if (!dark.has(k)) fail(`ui.css: ${k} is set for light only`);
+  const host = `:host { color-scheme: inherit; ${[...dark].map(([k, d]) => `${k}: light-dark(${light.get(k) ?? d}, ${d});`).join(" ")} }`;
   let css = once(uiCss, /@media \(prefers-color-scheme: light\) \{\s*:root \{[^}]*\}\s*\}/, () => "", "ui.css light-scheme :root block");
-  css = css.replace(/:root \{/g, ":host {");
+  css = once(css, /^:root \{[^}]*\}/m, () => host, "ui.css dark :root block");
   css = once(css, /^body \{/m, () => ".body {", "ui.css body {");
   css = once(css, /^body\.popup \{/m, () => ".popup {", "ui.css body.popup {");
   css = once(css, /^body\.popup main \{/m, () => ".popup main {", "ui.css body.popup main {");

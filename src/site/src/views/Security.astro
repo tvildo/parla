@@ -1,0 +1,31 @@
+---
+// How Parla is kept safe, at run time (in the browser) and in development (from source to the stores). Every claim
+// here must stay true: it is backed by docs/releasing.md (supply chain, security checks), the extension's manifest
+// and docs/telemetry.md. Change the page when those change.
+import Base from "../layouts/Base.astro";
+import { translator } from "../i18n";
+
+interface Props { lang: string }
+const { lang } = Astro.props;
+const t = translator(lang);
+const REPO = "https://github.com/tvildo/parla";
+/** a text with one {name} placeholder, split around it so a link can go in between */
+const around = (key: string, name: string) => t(key).split(`{${name}}`);
+const [reportA, reportB] = around("security.report.p", "link");
+const [openA, openB] = around("security.open.p", "docs");
+---
+<Base lang={lang} page="security/" title={t("security.title")} description={t("security.description")}>
+  <main class="prose">
+    <h1>{t("security.h1")}</h1>
+    <p>{t("security.short")}</p>
+    <h2>{t("security.run.h")}</h2>
+    <ul>{[1, 2, 3, 4, 5].map((i) => <li>{t(`security.run.${i}`)}</li>)}</ul>
+    <h2>{t("security.chain.h")}</h2>
+    <ul>{[1, 2, 3, 4].map((i) => <li>{t(`security.chain.${i}`)}</li>)}</ul>
+    <h2>{t("security.checks.h")}</h2>
+    <ul>{[1, 2, 3, 4, 5].map((i) => <li>{t(`security.checks.${i}`)}</li>)}</ul>
+    <h2>{t("security.report.h")}</h2>
+    <p>{reportA}<a href={`${REPO}/security/advisories/new`}>{t("security.report.link")}</a>{reportB}</p>
+    <p>{openA}<a href={`${REPO}/blob/master/docs/releasing.md#supply-chain`}>{t("security.open.docs")}</a>{openB}</p>
+  </main>
+</Base>

@@ -6,6 +6,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Website: a **light theme**. The site follows your system's light / dark setting, or the theme you pick in the header
+  (System, Light, Dark; remembered in your browser, applied before the page appears). Light uses the extension
+  popup's light colours; the "See it" popup preview and the browser's own controls (players, lists) follow the theme.
+- Website: a **Security** page (parla.cc/security, every language): how Parla keeps your voice and your browser safe
+  while it runs, how the code gets from the repository to the stores, what is checked on every change, and how to
+  report a problem privately. `SECURITY.md` says the same for GitHub.
+- Supply chain: no package, tool or image younger than 3 days goes in. npm (`min-release-age` in every `.npmrc`) and
+  uv (`exclude-newer` in `pyproject.toml`) refuse newer releases, CI checks every version a change adds to a lockfile
+  (`tools/release_age.ts`), Dependabot waits a week (docs/releasing.md#supply-chain).
 - Parla is in the [Chrome Web Store](https://chromewebstore.google.com/detail/iifachdagbndcbloopehiagjopjkohei) (Chrome, Edge, Brave, Opera) and on
   [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/parla-ai-noise-suppression/). The website's install page and home page link the stores
   first; the release files stay as the other way.
@@ -62,6 +71,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   by tvildo.
 
 ### Changed
+- The extension's settings and the website's privacy page now say why the optional reports exist: if Parla fails on
+  your computer (an error, a crash, a call without sound), turning them on is the easiest way to let us know, one switch
+  and no bug report to write. They are still off unless you turn them on.
+- Website: "Get the extension" is now **Install Parla** (the menu and the home page's button), and it leads to the install
+  page, which offers both: the browser extension, then the npm package for your own app (`npm install @tvildo/parla`,
+  developer docs, npm). The home page no longer repeats the install section.
+- Install page: each card and button shows the icon of its browser (Chrome, Brave, Opera, Firefox, Safari) or of Node.js /
+  npm, and the card for the browser you are using comes first, marked "Your browser". On phones the website's menu is
+  a menu button with a panel (the theme and language stay in the top row).
+- Website menu: shorter. Privacy and Security are under **Trust**, the docs, the npm package and the source code under
+  **Developers** (submenus that open on click, one at a time, Escape closes them); "Get the extension" is a button.
+- The Python (`build.py` and the model tools in `tools/`) is typed and checked with `mypy --strict` in
+  `python build.py check`; the tools' dependencies (numpy, soundfile, mypy) are locked with uv (`pyproject.toml`,
+  `uv.lock`; Dependabot keeps them current). `build.py` still needs only `python3`. Every model package rebuilt by the
+  tools is byte-identical to before. The README's install section shows `npm install @tvildo/parla`.
 - Website demo: one button. "Record 8 seconds to compare" opens the microphone, records and closes the microphone
   again, then shows the two takes and "Record again" (no separate "Start with my microphone" step, no Stop button); when the microphone can't be used, only the demo card turns into the reason and
   a retry, the heading and text around it stay.

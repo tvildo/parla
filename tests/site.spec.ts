@@ -9,7 +9,7 @@ const LANGS: { code: string; dir: string }[] = JSON.parse(fs.readFileSync(path.j
 const tr = (code: string) => JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'i18n', `${code}.json`), 'utf8'));
 const prefix = (code: string) => (code === 'en' ? '/' : `/${code}/`);
 
-test('every language: landing, privacy, demo pages, translated, with the right direction', async ({ page }) => {
+test('every language: landing, privacy, security, demo pages, translated, with the right direction', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   for (const { code, dir } of LANGS) {
@@ -20,6 +20,9 @@ test('every language: landing, privacy, demo pages, translated, with the right d
     await expect(page.getByRole('heading', { level: 1 })).toContainText(t['site.hero2']);
     await page.goto(`${prefix(code)}privacy/`);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(t['privacy.h1']);
+    await page.goto(`${prefix(code)}security/`);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(t['security.h1']);
+    await expect(page.locator('main a[href$="/security/advisories/new"]')).toHaveText(t['security.report.link']);
     await page.goto(`${prefix(code)}demo/`);
     await expect(page.getByRole('button', { name: t['demo.record'].replace('{s}', '8') })).toBeVisible();
   }
@@ -40,6 +43,125 @@ test('"See it" draws the real popup and demo card, translated, no pictures', asy
     const demo = see.locator('.preview-demo');
     await expect(demo.locator('h2')).toHaveText(t['demo.yourMic']);
     await expect(demo.getByRole('progressbar')).toHaveCount(1);
+  }
+});
+
+test('main menu: Trust and Developers open as submenus, one at a time, Escape closes; the current page is marked', async ({ page }) => {
+  const t = tr('en');
+  await page.goto('/');
+  const trust = page.locator('details.menu', { has: page.locator('summary', { hasText: t['site.nav.trust'] }) });
+  const dev = page.locator('details.menu', { has: page.locator('summary', { hasText: t['site.nav.dev'] }) });
+  await expect(trust.getByRole('link', { name: t['site.nav.security'] })).toBeHidden();
+  await trust.locator('summary').click();
+  await expect(trust.getByRole('link', { name: t['site.nav.privacy'] })).toBeVisible();
+  await dev.locator('summary').click();                                        // opening one closes the other
+  await expect(dev.getByRole('link', { name: t['site.nav.npm'] })).toBeVisible();
+  await expect(trust).not.toHaveAttribute('open', '');
+  await page.keyboard.press('Escape');
+  await expect(dev).not.toHaveAttribute('open', '');
+  await expect(dev.locator('summary')).toBeFocused();
+  await trust.locator('summary').click();
+  await trust.getByRole('link', { name: t['site.nav.security'] }).click();
+  await expect(page).toHaveURL(/\/security\/$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(t['security.h1']);
+  await expect(trust.locator('summary')).toHaveClass(/here/);
+  await expect(trust.locator('a[aria-current="page"]')).toHaveText(t['site.nav.security']);   // in the closed submenu
+});
+
+test('phone: the main menu is a panel behind the menu button; a group opens in place, a link or Escape closes it', async ({ page }) => {
+  const t = tr('en');
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto('/');
+  const toggle = page.getByRole('button', { name: t['site.nav.menu'] });
+  const panel = page.locator('#mainnav');
+  await expect(panel).toBeHidden();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('details.theme summary')).toBeVisible();          // theme and language stay in the top row
+  await expect(page.locator('.langs summary')).toBeVisible();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(panel.getByRole('link', { name: t['site.nav.try'] })).toBeVisible();
+  await expect(panel.locator('a.cta')).toHaveText(t['site.nav.install']);
+  await panel.locator('summary', { hasText: t['site.nav.trust'] }).click();
+  await expect(panel.getByRole('link', { name: t['site.nav.security'] })).toBeVisible();
+  await page.keyboard.press('Escape');                                         // closes the group and the panel
+  await expect(panel).toBeHidden();
+  await toggle.click();
+  await panel.getByRole('link', { name: t['site.nav.how'] }).click();          // same-page link: the panel closes
+  await expect(panel).toBeHidden();
+  await toggle.click();
+  await panel.locator('a.cta').click();
+  await expect(page).toHaveURL(/\/install\/$/);
+});
+
+test('theme: follows the system, a choice is remembered, the popup preview follows it', async ({ page }) => {
+  const t = tr('en');
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const popupBg = () => page.locator('.preview-popup .body').evaluate((el) => getComputedStyle(el).backgroundColor);
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);           // System: no choice stored
+  expect(await bg()).toBe('rgb(12, 12, 20)');
+  expect(await popupBg()).toBe('rgb(12, 12, 20)');
+  const summary = page.locator('details.theme summary');
+  await expect(summary).toHaveAttribute('aria-label', `${t['site.theme']}: ${t['site.theme.system']}`);
+  await summary.click();
+  await page.getByRole('button', { name: t['site.theme.light'] }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(summary).toHaveAttribute('aria-label', `${t['site.theme']}: ${t['site.theme.light']}`);
+  await expect(summary).toBeFocused();
+  expect(await bg()).toBe('rgb(246, 246, 251)');
+  expect(await popupBg()).toBe('rgb(246, 246, 251)');                                    // the popup's own light colours
+  await page.reload();                                                                     // remembered, applied before paint
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page.goto('/security/');
+  expect(await bg()).toBe('rgb(246, 246, 251)');
+  await summary.click();
+  await expect(page.getByRole('button', { name: t['site.theme.light'] })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: t['site.theme.system'] }).click();              // back to the system's (dark)
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);
+  expect(await bg()).toBe('rgb(12, 12, 20)');
+  await page.emulateMedia({ colorScheme: 'light' });
+  expect(await bg()).toBe('rgb(246, 246, 251)');
+});
+
+test('"Install Parla" (menu and home page) leads to the install page: the extension, then the npm package, in every language', async ({ page }) => {
+  for (const { code } of LANGS) {
+    const t = tr(code);
+    await page.goto(prefix(code));
+    await expect(page.locator('.nav-links a.cta')).toHaveText(t['site.nav.install']);
+    await expect(page.locator('#install')).toHaveCount(0);                     // no install section on the home page
+    await page.locator('.hero .btn.primary').click();
+    await expect(page).toHaveURL(new RegExp(`${prefix(code)}install/$`));
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(t['install.title']);
+    await expect(page.locator('#npm h2')).toHaveText(t['install.npm.h']);
+    await expect(page.locator('#npm .cmd')).toHaveText('npm install @tvildo/parla');
+  }
+});
+
+test("install page: icons on every card, the visitor's browser marked and first (Firefox, iPhone, Edge, Android Chrome)", async ({ browser }) => {
+  const t = tr('en');
+  const UA: [string, string, string | null][] = [
+    ['firefox', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'firefox'],
+    ['iphone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1', 'safari'],
+    ['edge', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0', 'chrome'],
+    ['android', 'Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36', null],
+  ];
+  for (const [name, userAgent, want] of UA) {
+    const ctx = await browser.newContext({ userAgent });
+    const page = await ctx.newPage();
+    await page.goto('/install/');
+    await expect(page.locator('.browser h2 svg.icon')).toHaveCount(3 + 1 + 1 + 2);    // chrome/brave/opera, firefox, safari, node/npm
+    await expect(page.locator('.browser .btn.primary svg.icon')).toHaveCount(3);       // Add to Chrome, Add to Firefox, docs
+    if (want) {
+      await expect(page.locator('.browser.mine'), name).toHaveAttribute('id', want);
+      await expect(page.locator('.browsers > .browser').first(), name).toHaveAttribute('id', want);
+      await expect(page.locator('.browser.mine .yours')).toHaveText(t['install.yours']);
+    } else {
+      await expect(page.locator('.browser.mine'), name).toHaveCount(0);
+      await expect(page.locator('.browsers > .browser').first()).toHaveAttribute('id', 'chrome');
+    }
+    await ctx.close();
   }
 });
 

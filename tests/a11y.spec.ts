@@ -1,5 +1,5 @@
-// Accessibility of the website: axe-core (WCAG 2.0/2.1/2.2 A + AA rules) on every page type in a left-to-right, a
-// right-to-left and a non-Latin language, the demo idle and running; and the demo by keyboard only.
+// Accessibility of the website: axe-core (WCAG 2.0/2.1/2.2 A + AA rules) on every page type, in the dark and the light
+// theme, in a left-to-right, a right-to-left and a non-Latin language, the demo idle and running; and the demo by keyboard only.
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import fs from 'node:fs';
@@ -17,13 +17,18 @@ async function axe(page: Page, what: string) {
 
 for (const lang of ['en', 'ka', 'ar']) {
   const p = lang === 'en' ? '/' : `/${lang}/`;
-  test(`axe: landing, privacy, demo (${lang})`, async ({ page }) => {
+  test(`axe in the dark theme: landing, privacy, security, demo (${lang})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });   // Playwright's default is light: that one is the test below
     await page.goto(p);
     await axe(page, `${lang} landing`);
     await page.locator('.langs summary').click();               // the open language menu too
     await axe(page, `${lang} landing, language menu open`);
+    await page.locator('details.menu:not(.langs) summary').first().click();   // a submenu of the main menu
+    await axe(page, `${lang} landing, main submenu open`);
     await page.goto(`${p}privacy/`);
     await axe(page, `${lang} privacy`);
+    await page.goto(`${p}security/`);
+    await axe(page, `${lang} security`);
     await page.goto(`${p}demo/`);
     await axe(page, `${lang} demo idle`);
     await page.getByRole('button', { name: tr(lang)['demo.record'].replace('{s}', '8') }).click();
@@ -33,6 +38,38 @@ for (const lang of ['en', 'ka', 'ar']) {
     await axe(page, `${lang} demo recorded`);
   });
 }
+
+for (const lang of ['en', 'ar']) {
+  const p = lang === 'en' ? '/' : `/${lang}/`;
+  test(`axe in the light theme: landing, menus, privacy, security, demo (${lang})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto(p);
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);
+    await axe(page, `${lang} landing, light`);
+    await page.locator('details.theme summary').click();
+    await axe(page, `${lang} landing, light, theme menu open`);
+    await page.goto(`${p}privacy/`);
+    await axe(page, `${lang} privacy, light`);
+    await page.goto(`${p}security/`);
+    await axe(page, `${lang} security, light`);
+    await page.goto(`${p}demo/`);
+    await axe(page, `${lang} demo idle, light`);
+    await page.getByRole('button', { name: tr(lang)['demo.record'].replace('{s}', '8') }).click();
+    await expect(page.getByRole('progressbar')).toBeVisible({ timeout: 30_000 });
+    await axe(page, `${lang} demo recording, light`);
+  });
+}
+
+test('axe on a phone: the menu panel open (en, ar)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  for (const [p, lang] of [['/', 'en'], ['/ar/', 'ar']]) {
+    await page.goto(p);
+    await axe(page, `${lang} phone, menu closed`);
+    await page.getByRole('button', { name: tr(lang)['site.nav.menu'] }).click();
+    await page.locator('#mainnav details.menu summary').first().click();
+    await axe(page, `${lang} phone, menu open`);
+  }
+});
 
 test('demo by keyboard only: record, strength, quality, record again', async ({ page }) => {
   const t = tr('en');

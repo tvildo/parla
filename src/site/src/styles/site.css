@@ -1,27 +1,49 @@
-/* Parla site: the palette and type of the original holding page (dark, indigo -> violet). */
+/* Parla site: the palette and type of the original holding page (dark, indigo -> violet), and its light version (the
+   extension popup's light colours). Every colour is light-dark(light, dark): the page follows the system unless the
+   visitor picked a theme (html[data-theme], Base.astro), which only sets color-scheme. Text colours keep >= 4.5:1
+   (WCAG AA) on --bg in both. */
 :root {
-  color-scheme: dark;
-  --fg: #f4f4f8;
-  --muted: #9a9ab0;
-  --faint: #8d8da6;   /* >= 4.5:1 on the background (WCAG AA) */
-  --accent: #7c7cff;
-  --accent-2: #b36bff;
-  --bg: #0c0c14;
-  --card: #15152466;
-  --line: #2a2a44;
+  color-scheme: light dark;
+  --fg: light-dark(#15152a, #f4f4f8);
+  --muted: light-dark(#4b4b63, #9a9ab0);
+  --faint: light-dark(#5c5c75, #8d8da6);
+  --accent: light-dark(#5b5bf7, #7c7cff);
+  --accent-2: light-dark(#8b4ff0, #b36bff);
+  --link: light-dark(#4f46e5, #a5a5ff);
+  --focus: light-dark(#4f46e5, #b9b9ff);
+  --bg: light-dark(#f6f6fb, #0c0c14);
+  --glow: light-dark(#e4e2ff, #23234a);           /* the page's background glow */
+  --card: light-dark(#ffffffcc, #15152466);
+  --pop: light-dark(#ffffff, #15152a);            /* menus, dropdowns */
+  --code: light-dark(#ececf6, #1c1c30);
+  --line: light-dark(#dedeed, #2a2a44);
+  --line-hover: light-dark(#b9b9d6, #3d3d66);
+  --soft: light-dark(#5b5bf71a, #7c7cff1a);       /* accent-tinted fills */
+  --soft-2: light-dark(#5b5bf726, #7c7cff22);
+  --shadow: light-dark(#1d1d4a33, #000c);
+  --grad-a: light-dark(#4f46e5, #a5a5ff);         /* the headline's gradient text */
+  --grad-b: light-dark(#9333ea, #e2a8ff);
+  --track: light-dark(#15152a14, #ffffff10);      /* meters, progress */
+  --stripe: light-dark(#15152a66, #ffffff55);
+  --stripe-2: light-dark(#15152a88, #ffffff77);
+  --switch: light-dark(#c9c9dc, #3a3a55);
+  --ok: light-dark(#15803d, #4ade80);
+  --error: light-dark(#b3261e, #ffb4b4);
   --font: system-ui, "Segoe UI", Roboto, sans-serif;
 }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 * { box-sizing: border-box; margin: 0; }
 body {
   font: 16px/1.55 var(--font); color: var(--fg); min-height: 100vh;
-  background: radial-gradient(1200px 600px at 50% 110%, #23234a 0%, var(--bg) 60%) fixed, var(--bg);
+  background: radial-gradient(1200px 600px at 50% 110%, var(--glow) 0%, var(--bg) 60%) fixed, var(--bg);
 }
-a { color: #a5a5ff; text-decoration: none; }
-:focus-visible { outline: 2px solid #b9b9ff; outline-offset: 3px; border-radius: 6px; }
+a { color: var(--link); text-decoration: none; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
 #content:focus { outline: none; }
 .skip {
   position: absolute; inset-inline-start: 12px; top: -60px; z-index: 20; padding: 10px 16px; border-radius: 10px;
-  background: #fff; color: #0c0c14; font-weight: 700;
+  background: var(--fg); color: var(--bg); font-weight: 700;
 }
 .skip:focus { top: 12px; }
 a:hover { text-decoration: underline; }
@@ -31,21 +53,22 @@ a:hover { text-decoration: underline; }
 .nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; gap: 16px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--fg); font-weight: 700; font-size: 18px; }
 .brand:hover { text-decoration: none; }
-.nav-links { display: flex; gap: 22px; font-size: 15px; }
+.nav-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px 20px; font-size: 15px; }
+.nav-links > a, .menu summary { white-space: nowrap; }
 .nav-links a { color: var(--muted); }
 .nav-links a:hover { color: var(--fg); text-decoration: none; }
 
 .logo {
   width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center;
   background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 800; font-size: 32px; color: #fff;
-  box-shadow: 0 10px 40px -10px #7c7cff99;
+  box-shadow: 0 10px 40px -10px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 .logo.small { width: 32px; height: 32px; border-radius: 9px; font-size: 17px; box-shadow: none; }
 
 .hero { text-align: center; padding: 64px 0 40px; }
 .hero .logo { margin: 0 auto 28px; }
 h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.1; letter-spacing: -0.02em; font-weight: 750; }
-.grad { background: linear-gradient(90deg, #a5a5ff, #e2a8ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.grad { background: linear-gradient(90deg, var(--grad-a), var(--grad-b)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lead { color: var(--muted); margin: 20px auto 0; font-size: 19px; max-width: 620px; }
 
 .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
@@ -53,8 +76,8 @@ h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.1; letter-spacing: -0.02e
   display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 12px; font-weight: 600;
   border: 1px solid var(--line); color: var(--fg); background: transparent; font: 600 15px var(--font); cursor: pointer;
 }
-.btn:hover { text-decoration: none; border-color: #3d3d66; }
-.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: 0; color: #fff; box-shadow: 0 8px 30px -12px #7c7cffaa; }
+.btn:hover { text-decoration: none; border-color: var(--line-hover); }
+.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: 0; color: #fff; box-shadow: 0 8px 30px -12px color-mix(in srgb, var(--accent) 67%, transparent); }
 .btn[aria-disabled="true"] { opacity: .65; cursor: default; }
 .note { color: var(--faint); font-size: 14px; margin-top: 14px; }
 
@@ -85,18 +108,34 @@ footer.foot a { color: var(--faint); }
 
 .actions.start { justify-content: flex-start; }
 
-/* language menu */
-.langs { position: relative; }
-.langs summary { list-style: none; cursor: pointer; color: var(--muted); }
-.langs summary::-webkit-details-marker { display: none; }
-.langs summary::before { content: "🌐 "; }
-.langs ul {
-  position: absolute; inset-inline-end: 0; top: 30px; z-index: 10; margin: 0; padding: 8px; list-style: none;
-  display: grid; grid-template-columns: repeat(2, minmax(130px, 1fr)); gap: 2px;
-  background: #15152a; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px -12px #000a;
+/* menus in the header: Trust, Developers, the languages (<details>; Base.astro) */
+.nav-links { align-items: center; }
+.nav-links a[aria-current="page"], .menu summary.here { color: var(--fg); }
+.nav-links a.cta { color: var(--fg); padding: 6px 12px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); background: var(--soft); }
+.nav-links a.cta:hover { border-color: var(--accent); }
+.menu { position: relative; }
+.menu summary { list-style: none; cursor: pointer; color: var(--muted); }
+.menu summary:hover { color: var(--fg); }
+.menu summary::-webkit-details-marker { display: none; }
+.menu:not(.langs, .theme) summary::after { content: ""; display: inline-block; margin-inline-start: 6px; vertical-align: 3px;
+  border: 4px solid transparent; border-top-color: currentColor; border-bottom-width: 0; transition: transform .15s; }
+.menu[open]:not(.langs, .theme) summary::after { transform: rotate(180deg); }
+.menu ul {
+  position: absolute; inset-inline-start: 0; top: 30px; z-index: 10; margin: 0; padding: 8px; list-style: none;
+  display: grid; gap: 2px; min-width: 190px;
+  background: var(--pop); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px -12px var(--shadow);
 }
-.langs li a { display: block; padding: 6px 10px; border-radius: 8px; color: var(--fg); }
-.langs li a:hover, .langs li a[aria-current] { background: #7c7cff22; text-decoration: none; }
+.menu li a { display: block; padding: 6px 10px; border-radius: 8px; color: var(--fg); white-space: nowrap; }
+.menu li a:hover, .menu li a[aria-current] { background: var(--soft-2); text-decoration: none; }
+.langs summary::before { content: "🌐 "; }
+.theme summary { display: grid; place-items: center; }
+.theme ul { inset-inline-start: auto; inset-inline-end: 0; min-width: 140px; }
+.theme button { display: block; width: 100%; text-align: start; padding: 6px 10px; border-radius: 8px; border: 0; background: none;
+  color: var(--fg); font: inherit; cursor: pointer; }
+.theme button:hover, .theme button[aria-pressed="true"] { background: var(--soft-2); }
+.theme button[aria-pressed="true"]::after { content: " ✓"; }
+.langs ul { inset-inline-start: auto; inset-inline-end: 0; grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+@media (prefers-reduced-motion: reduce) { .menu summary::after { transition: none; } }
 
 /* "this page is also in ..." */
 .suggest {
@@ -107,17 +146,43 @@ footer.foot a { color: var(--faint); }
 .suggest a { font-weight: 600; }
 .suggest button { background: none; border: 0; color: var(--faint); font: inherit; cursor: pointer; }
 
-@media (max-width: 640px) {
-  .nav { flex-wrap: wrap; }
-  .nav-links { flex-wrap: wrap; gap: 14px; }
+/* the header's tools (theme, language) and, on phones, the menu button */
+.nav-links { margin-inline-start: auto; }
+.nav-tools { display: flex; align-items: center; gap: 16px; font-size: 15px; }
+.menu-toggle { display: none; background: none; border: 1px solid var(--line); border-radius: 10px; color: var(--fg);
+  width: 40px; height: 40px; place-items: center; cursor: pointer; }
+.menu-toggle:hover { border-color: var(--line-hover); }
+
+/* phones and narrow windows: logo + tools + menu button in one row; the main menu is a panel under it (only when
+   scripts run: without them the links stay visible, wrapped) */
+@media (max-width: 760px) {
+  .nav { flex-wrap: wrap; padding: 16px 0; gap: 12px; }
+  .nav-tools { margin-inline-start: auto; gap: 14px; }
+  .js .menu-toggle { display: inline-grid; }
+  .nav-links { order: 3; width: 100%; margin: 0; flex-wrap: wrap; gap: 12px 16px; justify-content: flex-start; }
+  .js .nav-links { display: none; }
+  .js .nav.open .nav-links {
+    display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 8px;
+    background: var(--pop); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 16px 40px -12px var(--shadow);
+  }
+  .js .nav.open .nav-links > a, .js .nav.open .menu:not(.langs, .theme) summary { padding: 11px 12px; border-radius: 10px; font-size: 16px; color: var(--fg); }
+  .js .nav.open .nav-links > a:hover, .js .nav.open .menu summary:hover { background: var(--soft); }
+  .js .nav.open .menu summary { display: flex; justify-content: space-between; align-items: center; }
+  /* the groups open in place, indented, instead of floating */
+  .js .nav.open .nav-links .menu ul { position: static; min-width: 0; padding: 0 0 6px; padding-inline-start: 14px;
+    background: none; border: 0; box-shadow: none; }
+  .js .nav.open .nav-links .menu li a { padding: 9px 12px; color: var(--muted); }
+  .js .nav.open .nav-links a.cta { margin-top: 8px; text-align: center; color: #fff; border: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 600; }
+  .langs ul { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
 }
 
 /* screenshots */
 .shots { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 28px; }
 .shot { margin: 0; display: grid; gap: 12px; }
-.shot img { width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 24px 60px -24px #000c; background: var(--bg); }
+.shot img { width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 24px 60px -24px var(--shadow); background: var(--bg); }
 /* the previews (src/components/previews.ts): the real popup and demo card, framed like the screenshots were */
-.preview { border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 24px 60px -24px #000c; overflow: hidden; user-select: none; }
+.preview { border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 24px 60px -24px var(--shadow); overflow: hidden; user-select: none; }
 .preview-popup { width: 340px; max-width: 100%; }
 .shot figcaption { color: var(--muted); font-size: 15px; }
 @media (max-width: 760px) { .shots { grid-template-columns: 1fr; } .shot-popup { max-width: 340px; } }
@@ -128,19 +193,31 @@ footer.foot a { color: var(--faint); }
 .video-play { all: unset; position: absolute; inset: 0; cursor: pointer; }
 .video-play:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 .video-icon { position: absolute; left: 50%; top: 50%; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 10px 40px -10px #7c7cffcc; }
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 10px 40px -10px color-mix(in srgb, var(--accent) 80%, transparent); }
 .video-icon::after { content: ""; position: absolute; left: 34px; top: 26px; border-style: solid; border-width: 16px 0 16px 26px; border-color: transparent transparent transparent #fff; }
 .video-play:hover .video-icon { transform: scale(1.06); }
 #video .note { margin-top: 10px; }
+
+/* the npm command (install page) */
+.cmd code, .install .cmd code { all: unset; }   /* plain text inside the box (not the inline code style) */
+.cmd { margin: 12px 0 0; padding: 12px 14px; border-radius: 10px; background: var(--code); border: 1px solid var(--line);
+  font: 14px ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--fg); overflow-x: auto; user-select: all; }
 
 /* install page */
 .install { max-width: 760px; padding: 32px 0 64px; }
 .install h1 { font-size: clamp(28px, 5vw, 40px); }
 .install .lead { margin: 14px 0 26px; }
 .install .browser { margin-bottom: 18px; }
-.install .browser h2 { font-size: 20px; margin-bottom: 8px; }
+.install .browser h2 { font-size: 20px; margin-bottom: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
+.install .icons { display: inline-flex; gap: 8px; color: var(--fg); }
+.icon { flex: none; }
+/* the visitor's browser (Install.astro's script): first, outlined, labelled */
+.install .browser.mine { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 18px 50px -24px color-mix(in srgb, var(--accent) 70%, transparent); }
+.install .yours { display: inline-block; margin-bottom: 10px; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  color: var(--fg); background: var(--soft-2); }
+.install .yours[hidden] { display: none; }
 .install .browser .actions { margin-top: 16px; }
 .install .manual { margin-top: 18px; color: var(--muted); }
 .install .manual summary { cursor: pointer; }
 .install .manual p { margin-top: 10px; }
-.install code { background: #1c1c30; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: .92em; }
+.install code { background: var(--code); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: .92em; }
