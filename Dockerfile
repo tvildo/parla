@@ -14,7 +14,7 @@ COPY src/engine/ src/engine/
 # only the bundle (vi_rs_*): the site's engine; per-plugin modules are for other hosts
 RUN for i in 0 1 2; do python3 build.py wasm --only $i --out /out/wasm; done
 
-FROM node:26.13.0-bookworm-slim@sha256:bc0a2afd3b74ce12222fc8bab99271e66257f021078f5f4a5d687a77d280c1d9 AS site
+FROM node:26.13.0-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68 AS site
 RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 # the TypeScript compiler first (its own layer)
