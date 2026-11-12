@@ -105,7 +105,20 @@ a package has to be published by hand (`npm publish <file>.tgz --access public` 
 
 ## Supply chain
 
-What the pipeline trusts, and how each piece is pinned:
+What the pipeline trusts, and how each piece is pinned. **No new release younger than 3 days** goes in: most
+malicious versions (a hijacked maintainer account, a typo-squat) are found and pulled within a day or two, so waiting
+lets the registries and the security scanners catch them first. That applies to every package, tool, action, image and
+toolchain, whoever adds it (people, Dependabot, AI agents):
+
+| Where | How the 3 days are enforced |
+|---|---|
+| npm packages | `min-release-age=3` in every `.npmrc`: `npm install` / `npm update` never pick a newer version (npm 11.10+; older npm ignores the setting, the CI check below still applies) |
+| Python packages | `exclude-newer = "3 days"` in `pyproject.toml`: `uv lock` never resolves a newer version |
+| Every lockfile | CI (`tools/release_age.ts`) checks each package version a change adds to a `package-lock.json` or `uv.lock` (npm: its publish time from the registry; Python: the upload times in `uv.lock`) and fails when one is younger than 3 days |
+| Dependabot | `cooldown: 7 days` for every ecosystem: its pull requests only propose releases a week old |
+| By hand (actions, Docker images, Node, Rust, binaryen) | before pinning a new version, check its release date (the GitHub release / the image's push date): 3 days at least |
+
+A security fix younger than 3 days waits too, unless a maintainer decides otherwise for that one change.
 
 | Piece | Pinned by |
 |---|---|
@@ -114,13 +127,14 @@ What the pipeline trusts, and how each piece is pinned:
 | Rust | `src/engine/rust-toolchain.toml` (1.99.0); the engine uses no third-party crates, `cargo build --locked` |
 | binaryen (`wasm-opt`) | version + SHA-256 of the download (workflow and `Dockerfile`) |
 | npm packages | `package-lock.json` in every project, installed with `npm ci`; install scripts off (`.npmrc`: `ignore-scripts=true`); `npm audit signatures` checks the registry signatures |
+| Python packages (the model tools, mypy) | `uv.lock` (every file's SHA-256), `uv run --locked`; uv by version and the setup action by commit |
 | Store upload tools | `tools/release/package-lock.json` (no `npx` of the latest version) |
 | Docker base images | `@sha256:` digests (`Dockerfile`, `tests/Dockerfile`); downloads inside them (Firefox, geckodriver, binaryen) by SHA-256 |
 
 Checkouts don't keep the GitHub token (`persist-credentials: false`); only the release job can write (to create the
 tag and release), and the store and npm credentials live in the `stores` environment. Dependabot
 (`.github/dependabot.yml`) opens weekly pull requests into `development` to move the pins forward (GitHub actions,
-npm packages, the Docker images); CI tests them there, including the website image. When the Playwright image is
+npm packages, Python packages, the Docker images), each release at least a week old; CI tests them there, including the website image. When the Playwright image is
 updated, update `@playwright/test` in `tests/package.json` to the same version.
 
 **Upgrading Rust or Node** is done by hand, everywhere at once, not by Dependabot (it is told to skip them):

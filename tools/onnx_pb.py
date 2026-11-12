@@ -11,14 +11,51 @@ initializers / Constant tensors as numpy arrays, input/output names + static sha
 """
 import struct
 import sys
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Any, TypedDict
 
 import numpy as np
+import numpy.typing as npt
 
-DTYPES = {1: np.float32, 2: np.uint8, 3: np.int8, 4: np.uint16, 5: np.int16, 6: np.int32, 7: np.int64,
-          9: np.bool_, 10: np.float16, 11: np.float64, 12: np.uint32, 13: np.uint64}
+Array = npt.NDArray[Any]
+Attrs = dict[str, Any]   # attribute values as in the file: float, int, str, tensor, graph, or lists of them
+Dim = int | str          # a static size or a symbolic name ("?" when absent)
+ValueInfo = tuple[str, int, list[Dim] | None]   # name, element type, dims (None: unknown rank)
+Value = int | bytes      # one protobuf field: varint as int; length-delimited and fixed-size as bytes
 
 
-def _varint(b, i):
+class Node(TypedDict):
+    op: str
+    name: str
+    inputs: list[str]
+    outputs: list[str]
+    attrs: Attrs
+    domain: str
+
+
+class Graph(TypedDict):
+    name: str
+    nodes: list[Node]
+    initializers: dict[str, Array]
+    inputs: list[ValueInfo]
+    outputs: list[ValueInfo]
+    value_info: dict[str, tuple[int, list[Dim] | None]]
+
+
+class Model(TypedDict):
+    opset: dict[str, int]
+    producer: str
+    ir_version: int
+    graph: Graph
+
+
+DTYPES: dict[int, type[np.generic]] = {
+    1: np.float32, 2: np.uint8, 3: np.int8, 4: np.uint16, 5: np.int16, 6: np.int32, 7: np.int64,
+    9: np.bool_, 10: np.float16, 11: np.float64, 12: np.uint32, 13: np.uint64}
+
+
+def _varint(b: bytes, i: int) -> tuple[int, int]:
     r = s = 0
     while True:
         c = b[i]
@@ -29,12 +66,13 @@ def _varint(b, i):
             return r, i
 
 
-def fields(b):
-    """Yield (field_number, wire_type, value) for one message; value = int (varint/fixed) or bytes."""
+def fields(b: bytes) -> Iterator[tuple[int, int, Value]]:
+    """Yield (field_number, wire_type, value) for one message; value = int (varint) or bytes."""
     i, n = 0, len(b)
     while i < n:
         key, i = _varint(b, i)
         f, wt = key >> 3, key & 7
+        v: Value
         if wt == 0:
             v, i = _varint(b, i)
         elif wt == 1:
@@ -52,41 +90,65 @@ def fields(b):
         yield f, wt, v
 
 
-def _sint64(v):
+def _int(v: Value) -> int:
+    if not isinstance(v, int):
+        raise ValueError("malformed ONNX: a number field holds bytes")
+    return v
+
+
+def _bytes(v: Value) -> bytes:
+    if not isinstance(v, bytes):
+        raise ValueError("malformed ONNX: a bytes field holds a number")
+    return v
+
+
+def _sint64(v: int) -> int:
     return v - (1 << 64) if v >= (1 << 63) else v
 
 
-def _packed_varints(v, wt):
+def _packed_varints(v: Value, wt: int) -> list[int]:
     if wt == 0:
-        return [_sint64(v)]
-    out, i = [], 0
-    while i < len(v):
-        x, i = _varint(v, i)
+        return [_sint64(_int(v))]
+    b = _bytes(v)
+    out: list[int] = []
+    i = 0
+    while i < len(b):
+        x, i = _varint(b, i)
         out.append(_sint64(x))
     return out
 
 
-def tensor(b):
-    dims, dt, name, raw = [], 1, "", None
-    lists = {4: [], 5: [], 7: [], 10: [], 11: []}
+def _floats(v: Value, wt: int, code: str, size: int) -> list[float]:
+    """A packed (wire type 2) or single fixed-size float / double field."""
+    b = _bytes(v)
+    return list(struct.unpack(f"<{len(b) // size}{code}", b)) if wt == 2 else [struct.unpack(f"<{code}", b)[0]]
+
+
+def tensor(b: bytes) -> tuple[str, Array]:
+    dims: list[int] = []
+    dt, name = 1, ""
+    raw: bytes | None = None
+    lists: dict[int, list[float]] = {4: [], 10: []}
+    ilists: dict[int, list[int]] = {5: [], 7: [], 11: []}
     for f, wt, v in fields(b):
         if f == 1:
             dims += _packed_varints(v, wt)
         elif f == 2:
-            dt = v
+            dt = _int(v)
         elif f == 8:
-            name = v.decode()
+            name = _bytes(v).decode()
         elif f == 9:
-            raw = bytes(v)
+            raw = _bytes(v)
         elif f == 4:
-            lists[4] += list(struct.unpack(f"<{len(v)//4}f", v)) if wt == 2 else [struct.unpack("<f", v)[0]]
+            lists[4] += _floats(v, wt, "f", 4)
         elif f == 10:
-            lists[10] += list(struct.unpack(f"<{len(v)//8}d", v)) if wt == 2 else [struct.unpack("<d", v)[0]]
+            lists[10] += _floats(v, wt, "d", 8)
         elif f in (5, 7, 11):
-            lists[f] += _packed_varints(v, wt)
+            ilists[f] += _packed_varints(v, wt)
         elif f == 14 and v == 1:
             raise ValueError(f"external data not supported ({name})")
     npdt = DTYPES[dt]
+    a: Array
     if raw is not None:
         a = np.frombuffer(raw, npdt).copy()
     elif dt == 1:
@@ -94,42 +156,46 @@ def tensor(b):
     elif dt == 11:
         a = np.array(lists[10], np.float64)
     elif dt == 7:
-        a = np.array(lists[7], np.int64)
+        a = np.array(ilists[7], np.int64)
     elif dt in (13, 12):
-        a = np.array(lists[11], npdt)
+        a = np.array(ilists[11], npdt)
     elif dt == 10:
-        a = np.array(lists[5], np.uint16).view(np.float16)
+        a = np.array(ilists[5], np.uint16).view(np.float16)
     else:
-        a = np.array(lists[5], npdt)
+        a = np.array(ilists[5], npdt)
     return name, a.reshape(dims) if dims else a.reshape(())
 
 
-def attribute(b):
-    name, val, typ = "", None, 0
-    floats, ints, strings, tensors = [], [], [], []
+def attribute(b: bytes) -> tuple[str, Any]:
+    name, typ = "", 0
+    val: Any = None
+    floats: list[float] = []
+    ints: list[int] = []
+    strings: list[str] = []
+    tensors: list[Array] = []
     for f, wt, v in fields(b):
         if f == 1:
-            name = v.decode()
+            name = _bytes(v).decode()
         elif f == 2:
-            val = struct.unpack("<f", v)[0]
+            val = struct.unpack("<f", _bytes(v))[0]
         elif f == 3:
-            val = _sint64(v)
+            val = _sint64(_int(v))
         elif f == 4:
-            val = bytes(v).decode(errors="replace")
+            val = _bytes(v).decode(errors="replace")
         elif f == 5:
-            val = tensor(v)[1]
+            val = tensor(_bytes(v))[1]
         elif f == 6:
-            val = graph(v)
+            val = graph(_bytes(v))
         elif f == 7:
-            floats += list(struct.unpack(f"<{len(v)//4}f", v)) if wt == 2 else [struct.unpack("<f", v)[0]]
+            floats += _floats(v, wt, "f", 4)
         elif f == 8:
             ints += _packed_varints(v, wt)
         elif f == 9:
-            strings.append(bytes(v).decode(errors="replace"))
+            strings.append(_bytes(v).decode(errors="replace"))
         elif f == 10:
-            tensors.append(tensor(v)[1])
+            tensors.append(tensor(_bytes(v))[1])
         elif f == 20:
-            typ = v
+            typ = _int(v)
     if typ == 6 or (val is None and floats):
         val = floats
     elif typ == 7 or (val is None and ints):
@@ -143,88 +209,93 @@ def attribute(b):
     return name, val
 
 
-def node(b):
-    n = {"op": "", "name": "", "inputs": [], "outputs": [], "attrs": {}, "domain": ""}
+def node(b: bytes) -> Node:
+    n: Node = {"op": "", "name": "", "inputs": [], "outputs": [], "attrs": {}, "domain": ""}
     for f, wt, v in fields(b):
         if f == 1:
-            n["inputs"].append(v.decode())
+            n["inputs"].append(_bytes(v).decode())
         elif f == 2:
-            n["outputs"].append(v.decode())
+            n["outputs"].append(_bytes(v).decode())
         elif f == 3:
-            n["name"] = v.decode()
+            n["name"] = _bytes(v).decode()
         elif f == 4:
-            n["op"] = v.decode()
+            n["op"] = _bytes(v).decode()
         elif f == 5:
-            k, a = attribute(v)
+            k, a = attribute(_bytes(v))
             n["attrs"][k] = a
         elif f == 7:
-            n["domain"] = v.decode()
+            n["domain"] = _bytes(v).decode()
     return n
 
 
-def value_info(b):
-    name, et, dims = "", 0, None
+def value_info(b: bytes) -> ValueInfo:
+    name, et = "", 0
+    dims: list[Dim] | None = None
     for f, wt, v in fields(b):
         if f == 1:
-            name = v.decode()
+            name = _bytes(v).decode()
         elif f == 2:
-            for f2, _, v2 in fields(v):
+            for f2, _, v2 in fields(_bytes(v)):
                 if f2 == 1:  # tensor_type
-                    for f3, _, v3 in fields(v2):
+                    for f3, _, v3 in fields(_bytes(v2)):
                         if f3 == 1:
-                            et = v3
+                            et = _int(v3)
                         elif f3 == 2:
                             dims = []
-                            for f4, _, v4 in fields(v3):
+                            for f4, _, v4 in fields(_bytes(v3)):
                                 if f4 == 1:
-                                    d = "?"
-                                    for f5, _, v5 in fields(v4):
-                                        d = v5 if f5 == 1 else v5.decode()
+                                    d: Dim = "?"
+                                    for f5, _, v5 in fields(_bytes(v4)):
+                                        d = _int(v5) if f5 == 1 else _bytes(v5).decode()
                                     dims.append(d)
     return name, et, dims
 
 
-def graph(b):
-    g = {"name": "", "nodes": [], "initializers": {}, "inputs": [], "outputs": [], "value_info": {}}
+def graph(b: bytes) -> Graph:
+    g: Graph = {"name": "", "nodes": [], "initializers": {}, "inputs": [], "outputs": [], "value_info": {}}
     for f, wt, v in fields(b):
         if f == 1:
-            g["nodes"].append(node(v))
+            g["nodes"].append(node(_bytes(v)))
         elif f == 2:
-            g["name"] = v.decode()
+            g["name"] = _bytes(v).decode()
         elif f == 5:
-            k, a = tensor(v)
+            k, a = tensor(_bytes(v))
             g["initializers"][k] = a
         elif f == 11:
-            g["inputs"].append(value_info(v))
+            g["inputs"].append(value_info(_bytes(v)))
         elif f == 12:
-            g["outputs"].append(value_info(v))
+            g["outputs"].append(value_info(_bytes(v)))
         elif f == 13:
-            k, et, d = value_info(v)
+            k, et, d = value_info(_bytes(v))
             g["value_info"][k] = (et, d)
     # graph inputs that are initializers are not real inputs
     g["inputs"] = [x for x in g["inputs"] if x[0] not in g["initializers"]]
     return g
 
 
-def load(path):
-    b = open(path, "rb").read()
-    m = {"opset": {}, "producer": "", "ir_version": 0}
+def load(path: str | Path) -> Model:
+    b = Path(path).read_bytes()
+    opset: dict[str, int] = {}
+    producer, ir_version = "", 0
+    g: Graph | None = None
     for f, wt, v in fields(b):
         if f == 1:
-            m["ir_version"] = v
+            ir_version = _int(v)
         elif f == 2:
-            m["producer"] = v.decode()
+            producer = _bytes(v).decode()
         elif f == 7:
-            m["graph"] = graph(v)
+            g = graph(_bytes(v))
         elif f == 8:
             dom, ver = "", 0
-            for f2, _, v2 in fields(v):
+            for f2, _, v2 in fields(_bytes(v)):
                 if f2 == 1:
-                    dom = v2.decode()
+                    dom = _bytes(v2).decode()
                 elif f2 == 2:
-                    ver = v2
-            m["opset"][dom] = ver
-    return m
+                    ver = _int(v2)
+            opset[dom] = ver
+    if g is None:
+        raise ValueError(f"{path}: no graph in this ONNX file")
+    return {"opset": opset, "producer": producer, "ir_version": ir_version, "graph": g}
 
 
 if __name__ == "__main__":

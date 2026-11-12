@@ -11,12 +11,12 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from graph_ref import Package, run_op  # noqa: E402
-from onnx2graph import fold_only, lower  # noqa: E402
-from onnx_pb import load  # noqa: E402
+from graph_ref import Array, Package, run_op  # noqa: E402
+from onnx2graph import fold_only, lower, static_dims  # noqa: E402
+from onnx_pb import Graph, load  # noqa: E402
 
 
-def interp(g, env):
+def interp(g: Graph, env: dict[str, Array]) -> dict[str, Array]:
     """Execute ONNX graph dict `g` (onnx_pb) node by node with our ops; env holds inputs/states."""
     env = {**{k: np.asarray(v) for k, v in g["initializers"].items()}, **env}
     for n in g["nodes"]:
@@ -38,14 +38,14 @@ def interp(g, env):
     return env
 
 
-def main():
+def main() -> None:
     onnx_path, pkg_dir, wav = sys.argv[1:4]
     nf = int(sys.argv[sys.argv.index("--frames") + 1]) if "--frames" in sys.argv else 200
     pk = Package(pkg_dir)
     g = load(onnx_path)["graph"]
     states = [(s["in"], s["out"]) for s in json.loads((Path(pkg_dir) / "graph.json").read_text())["states"]]
     pin, pout = pk.p["input"], pk.p["output"]
-    shapes = {n: [d if isinstance(d, int) else 1 for d in dims] for n, _, dims in g["inputs"]}
+    shapes = {n: static_dims(n, dims) for n, _, dims in g["inputs"]}
     st = {i: np.zeros(shapes[i], np.float32) for i, _ in states}
     x = np.fromfile(wav, "<f4")[: nf * pk.fs]
     out_ref = np.zeros(len(x), np.float32)
@@ -73,7 +73,7 @@ def main():
         for i, o in states:
             st[i] = env[o].astype(np.float32)
         d = np.abs(env[pout].reshape(-1) - y_pkg.reshape(-1)).max()
-        maxd = max(maxd, d)
+        maxd = max(maxd, float(d))
         out_ref[f * pk.fs:(f + 1) * pk.fs] = pk._back(env[pout].astype(np.float32), spec)
     ref_mag = np.abs(env[pout]).max()
     print(f"{onnx_path}: {nf} frames, max|original ONNX (our ops) - package| over graph outputs = {maxd:.3e} (output scale {ref_mag:.3e})")

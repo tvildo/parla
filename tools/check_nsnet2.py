@@ -15,7 +15,7 @@ from graph_ref import Package  # noqa: E402
 from onnx_pb import load  # noqa: E402
 
 
-def main():
+def main() -> None:
     src, pkg, wav = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
     sec = float(sys.argv[sys.argv.index("--seconds") + 1]) if "--seconds" in sys.argv else 3.0
     x = np.fromfile(wav, "<f4")[: int(sec * 16000)].astype(np.float64)

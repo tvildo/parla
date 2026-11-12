@@ -19,21 +19,23 @@ import json
 import sys
 from pathlib import Path
 
+from typing import Any
+
 import numpy as np
 
 A_S, GAMMA, BETA, BIAS, A_DD, G_MIN, EPS = 0.7, 0.998, 0.96, 1.5, 0.98, 10 ** (-15 / 20), 1e-10
 F = 257
 
 
-def main():
+def main() -> None:
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "models/spectral")
     out.mkdir(parents=True, exist_ok=True)
     c = {"a_s": A_S, "one_m_a_s": 1 - A_S, "g": GAMMA, "k": (1 - GAMMA) / (1 - BETA), "b": BETA, "bias": BIAS,
          "eps": EPS, "a_dd": A_DD, "one_m_a_dd": 1 - A_DD, "one": 1.0, "zero": 0.0, "gmin": G_MIN}
     inits = {k: {"shape": [], "value": [v]} for k, v in c.items()}
-    N = []
+    N: list[dict[str, Any]] = []
 
-    def node(op, ins, out_name):
+    def node(op: str, ins: list[str], out_name: str) -> str:
         N.append({"op": op, "name": out_name, "inputs": ins, "outputs": [out_name]})
         return out_name
 

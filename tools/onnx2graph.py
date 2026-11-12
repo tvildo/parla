@@ -19,13 +19,28 @@ import argparse
 import hashlib
 import json
 import sys
+from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import Any, NotRequired, TypedDict
 
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from graph_ref import run_op  # noqa: E402
-from onnx_pb import load  # noqa: E402
+from graph_ref import Array, Attrs, F32Array, Json, run_op  # noqa: E402
+from onnx_pb import Node, load  # noqa: E402
+
+
+class GraphNode(TypedDict):
+    """one node of graph.json (models/FORMAT.md)"""
+    op: str
+    name: str
+    inputs: list[str]
+    outputs: list[str]
+    attrs: NotRequired[Attrs]
+
+
+States = list[tuple[str, str]]   # (state input, state output) pairs
+Converted = tuple[list[GraphNode], dict[str, F32Array], list[Json], list[Json], dict[str, Array]]
 
 BIG = 2 ** 31 - 1
 SUPPORTED = {"Relu", "Sigmoid", "Tanh", "Sqrt", "Abs", "Exp", "Log", "Neg", "Reciprocal", "Softplus", "LeakyRelu", "Elu",
@@ -35,11 +50,11 @@ SUPPORTED = {"Relu", "Sigmoid", "Tanh", "Sqrt", "Abs", "Exp", "Log", "Neg", "Rec
              "Transpose", "Squeeze", "Unsqueeze", "Flatten", "Pad", "Expand", "Tile", "Cast", "MaxPool"}
 
 
-def ints(a):
+def ints(a: Any) -> list[int]:
     return [int(min(max(v, -BIG), BIG)) for v in np.asarray(a).reshape(-1).tolist()]
 
 
-def fold_only(op, ins, a, shape_of):
+def fold_only(op: str, ins: Sequence[Any], a: Attrs, shape_of: Callable[[int], tuple[int, ...]]) -> list[Array] | None:
     """Ops that only appear in shape arithmetic (must be constant-folded)."""
     if op == "Shape":
         return [np.array(shape_of(0), np.int64)]
@@ -71,11 +86,24 @@ def fold_only(op, ins, a, shape_of):
     return None
 
 
-def lower(n, const):
+def static_dims(name: str, dims: list[int | str] | None) -> list[int]:
+    """An ONNX input's shape with symbolic sizes (batch, time) set to 1."""
+    if dims is None:
+        raise ValueError(f"graph input {name} has no static rank")
+    return [d if isinstance(d, int) else 1 for d in dims]
+
+
+def _need_x(arr: list[Array | None]) -> Array:
+    if not arr or arr[0] is None:
+        raise ValueError("missing input 0")
+    return arr[0]
+
+
+def lower(n: Node, const: dict[str, Array]) -> tuple[str, list[str], Attrs]:
     """ONNX node -> our node (op, inputs, attrs); moves static tensor inputs into attributes."""
     op, ins, a = n["op"], list(n["inputs"]), dict(n["attrs"])
 
-    def c(i):
+    def c(i: int) -> Array | None:
         if i >= len(ins) or not ins[i]:
             return None
         if ins[i] not in const:
@@ -150,13 +178,14 @@ def lower(n, const):
     return op, ins, a
 
 
-def convert(onnx_path, states, pin, pout, rename=None, stream_rnn=False, stream_time=None, pins=None, pouts=None):
+def convert(onnx_path: str | Path, states: States, pin: str, pout: str, stream_rnn: bool = False,
+            stream_time: int | None = None, pins: list[str] | None = None, pouts: list[str] | None = None) -> Converted:
     m = load(onnx_path)
     g = m["graph"]
     const = {k: np.asarray(v) for k, v in g["initializers"].items()}
-    inputs = {name: [d if isinstance(d, int) else 1 for d in dims] for name, _, dims in g["inputs"]}
-    vals = {k: np.zeros(v, np.float32) for k, v in inputs.items()}   # zero-input execution for shapes
-    nodes = []
+    inputs: dict[str, list[int]] = {name: static_dims(name, dims) for name, _, dims in g["inputs"]}
+    vals: dict[str, Array] = {k: np.zeros(v, np.float32) for k, v in inputs.items()}   # zero-input execution for shapes
+    nodes: list[GraphNode] = []
     folded = 0
     for n in g["nodes"]:
         if n["op"] == "Constant":
@@ -191,18 +220,19 @@ def convert(onnx_path, states, pin, pout, rename=None, stream_rnn=False, stream_
             shp = [d, xin.shape[1], a["hidden_size"]]
             ins = ins + [""] * (7 - len(ins))
             outs = list(n["outputs"]) + [""] * (3 - len(n["outputs"]))
-            for k, (slot, osl) in enumerate([(5, 1), (6, 2)] if op == "LSTM" else [(5, 1)]):
-                sname = f"{n['name'] or n['outputs'][0]}_state{k}_in"
+            for si, (slot, osl) in enumerate([(5, 1), (6, 2)] if op == "LSTM" else [(5, 1)]):
+                sname = f"{n['name'] or n['outputs'][0]}_state{si}_in"
                 if not outs[osl]:
-                    outs[osl] = f"{n['name'] or n['outputs'][0]}_state{k}_out"
+                    outs[osl] = f"{n['name'] or n['outputs'][0]}_state{si}_out"
                 ins[slot] = sname
                 inputs[sname] = shp
                 vals[sname] = np.zeros(shp, np.float32)
                 states.append((sname, outs[osl]))
-            n = {**n, "outputs": outs}
+            n = n.copy()
+            n["outputs"] = outs
             while ins and not ins[-1]:
                 ins.pop()
-        def emit(op2, ins2, outs2, a2):
+        def emit(op2: str, ins2: list[str], outs2: list[str], a2: Attrs) -> None:
             arr2 = [(vals[i] if i in vals else const[i].astype(np.float32)) if i else None for i in ins2]
             r2 = run_op(op2, arr2, a2)
             for o2, v2 in zip(outs2, r2):
@@ -226,14 +256,14 @@ def convert(onnx_path, states, pin, pout, rename=None, stream_rnn=False, stream_
         if stream_time is not None and op == "Pad" and a.get("mode", "constant") == "constant":
             # causal padding on the time axis of a whole-sequence model -> streaming cache state
             x0 = vals[ins[0]]
-            nd = x0.ndim
+            ndim = x0.ndim
             pads = list(a["pads"])
             ta = stream_time
-            pb, pe = pads[ta], pads[ta + nd]
+            pb, pe = pads[ta], pads[ta + ndim]
             if pb > 0 and pe == 0 and a.get("value", 0.0) == 0.0:
                 o = n["outputs"][0]
                 sname = o + "_tcache_in"
-                shp = list(x0.shape)
+                shp = [int(v) for v in x0.shape]
                 shp[ta] = pb
                 inputs[sname] = shp
                 vals[sname] = np.zeros(shp, np.float32)
@@ -254,8 +284,8 @@ def convert(onnx_path, states, pin, pout, rename=None, stream_rnn=False, stream_
             op = "Identity"
         arr = [(vals[i] if i in vals else const[i].astype(np.float32)) if i else None for i in ins]
         if op == "Split" and "split" not in a:
-            k = len(n["outputs"])
-            a["split"] = [arr[0].shape[a.get("axis", 0)] // k] * k
+            parts = len(n["outputs"])
+            a["split"] = [_need_x(arr).shape[a.get("axis", 0)] // parts] * parts
         r = run_op(op, arr, a)
         for o, v in zip(n["outputs"], r):
             if o:
@@ -264,13 +294,13 @@ def convert(onnx_path, states, pin, pout, rename=None, stream_rnn=False, stream_
 
     # ---- BatchNorm folding
     prod = {o: k for k, nd in enumerate(nodes) for o in nd["outputs"]}
-    uses = {}
+    uses: dict[str, int] = {}
     for nd in nodes:
         for i in nd["inputs"]:
             uses[i] = uses.get(i, 0) + 1
-    drop = set()
+    drop: set[int] = set()
     n_bn = 0
-    for k, nd in enumerate(nodes):
+    for ki, nd in enumerate(nodes):
         if nd["op"] != "BatchNormalization":
             continue
         x = nd["inputs"][0]
@@ -297,9 +327,9 @@ def convert(onnx_path, states, pin, pout, rename=None, stream_rnn=False, stream_
         const[wn], const[bn] = w2.astype(np.float32), b2.astype(np.float32)
         cv["inputs"] = [cv["inputs"][0], wn, bn]
         cv["outputs"] = nd["outputs"]
-        drop.add(k)
+        drop.add(ki)
         n_bn += 1
-    nodes = [nd for k, nd in enumerate(nodes) if k not in drop]
+    nodes = [nd for ki, nd in enumerate(nodes) if ki not in drop]
 
     # ---- stride-1 ConvTranspose -> Conv (flipped kernel, in/out swapped per group, pads' = d*(k-1) - p)
     n_ct = 0
@@ -351,10 +381,27 @@ def convert(onnx_path, states, pin, pout, rename=None, stream_rnn=False, stream_
     return nodes, inits, ginputs, gstates, vals
 
 
-def write_package(out_dir, name, nodes, inits, ginputs, gstates, pout, manifest):
+def prefixed(nodes: list[GraphNode], inits: dict[str, F32Array], ginputs: list[Json], gstates: list[Json], pfx: str,
+             keep: set[str]) -> tuple[list[GraphNode], dict[str, F32Array], list[Json], list[Json]]:
+    """One converted stage with every tensor name prefixed (except `keep`), to combine several stages in one graph."""
+    def ren(t: str) -> str:
+        return t if (not t or t in keep) else pfx + t
+    out: list[GraphNode] = []
+    for n in nodes:
+        r = n.copy()
+        r["name"], r["inputs"], r["outputs"] = pfx + n["name"], [ren(i) for i in n["inputs"]], [ren(o) for o in n["outputs"]]
+        out.append(r)
+    return (out, {pfx + k: v for k, v in inits.items()}, [{**g, "name": ren(g["name"])} for g in ginputs],
+            [{**s, "in": ren(s["in"]), "out": ren(s["out"])} for s in gstates])
+
+
+def write_package(out_dir: str | Path, name: str, nodes: list[GraphNode], inits: dict[str, F32Array], ginputs: list[Json],
+                  gstates: list[Json], pout: str, manifest: Json) -> Json:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    init_json, data, off = {}, [], 0
+    init_json: dict[str, Json] = {}
+    data: list[F32Array] = []
+    off = 0
     for k, v in inits.items():
         if v.size <= 4:
             init_json[k] = {"shape": list(v.shape), "value": [float(x) for x in v.reshape(-1)]}
@@ -375,7 +422,7 @@ def write_package(out_dir, name, nodes, inits, ginputs, gstates, pout, manifest)
     return manifest
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("onnx")
     ap.add_argument("out")

@@ -9,41 +9,46 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from graph_ref import Graph  # noqa: E402
+from graph_ref import Array, F32Array, Graph, Json  # noqa: E402
+
+C64Array = npt.NDArray[np.complex64]
 
 F = np.float32
 
 
 class DFN:
-    def __init__(self, pkg):
+    def __init__(self, pkg: str | Path) -> None:
         pkg = Path(pkg)
         man = json.loads((pkg / "manifest.json").read_text())
-        self.c = c = man["config"]
+        self.c: Json = man["config"]
+        c = self.c
         self.g = Graph(json.loads((pkg / man["graph"]).read_text()), np.fromfile(pkg / man["weights"], "<f4"))
-        self.n, self.hop = c["fft_size"], c["hop_size"]
+        self.n: int = c["fft_size"]
+        self.hop: int = c["hop_size"]
         self.F = self.n // 2 + 1
         h = self.n // 2
         i = np.arange(self.n)
         self.win = np.sin(.5 * np.pi * np.sin(.5 * np.pi * (i + .5) / h) ** 2).astype(F)
         self.wnorm = F(1.0 / (self.n ** 2 / (2 * self.hop)))
-        self.erb = c["erb_widths"]
+        self.erb: list[int] = c["erb_widths"]
         self.alpha = F(c["norm_alpha"])
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         c = self.c
         self.g.reset()
         self.amem = np.zeros(self.n - self.hop, F)
         self.smem = np.zeros(self.n - self.hop, F)
         self.mn = np.linspace(c["mean_norm_init"][0], c["mean_norm_init"][1], c["nb_erb"]).astype(F)
         self.un = np.linspace(c["unit_norm_init"][0], c["unit_norm_init"][1], c["nb_df"]).astype(F)
-        self.ry = [np.zeros(self.F, np.complex64) for _ in range(c["df_order"] + c["conv_lookahead"])]
-        self.rx = [np.zeros(self.F, np.complex64) for _ in range(max(c["df_order"], c["conv_lookahead"]))]
+        self.ry: list[C64Array] = [np.zeros(self.F, np.complex64) for _ in range(c["df_order"] + c["conv_lookahead"])]
+        self.rx: list[C64Array] = [np.zeros(self.F, np.complex64) for _ in range(max(c["df_order"], c["conv_lookahead"]))]
         self.skip = 0
 
-    def band_gain(self, X, g):
+    def band_gain(self, X: C64Array, g: Array) -> C64Array:
         out = X.copy()
         k = 0
         for b, w in enumerate(self.erb):
@@ -51,7 +56,7 @@ class DFN:
             k += w
         return out
 
-    def frame(self, x):
+    def frame(self, x: Array) -> F32Array:
         c = self.c
         if np.mean(x.astype(F) ** 2, dtype=F) < 1e-7:
             self.skip += 1
@@ -83,7 +88,8 @@ class DFN:
         o = self.g.run({"feat_erb": fe.reshape(1, 1, 1, -1), "feat_spec": feat_spec}, keep=True)
         lsnr = float(o["lsnr"].reshape(-1)[0])
         if lsnr < c["min_db_thresh"]:
-            gains, df = np.zeros(c["nb_erb"], F), False
+            gains: Array | None = np.zeros(c["nb_erb"], F)
+            df = False
         elif lsnr > c["max_db_erb_thresh"]:
             gains, df = None, False
         elif lsnr > c["max_db_df_thresh"]:
@@ -100,14 +106,14 @@ class DFN:
             for k in range(c["df_order"]):
                 acc += self.rx[k][:nd] * (co[:, k, 0] + 1j * co[:, k, 1]).astype(np.complex64)
             out[:nd] = acc
-        y = (np.fft.irfft(out.astype(np.complex128), self.n) * self.n).astype(F) * self.win
+        y: F32Array = (np.fft.irfft(out.astype(np.complex128), self.n) * self.n).astype(F) * self.win
         res = y[:self.hop] + self.smem[:self.hop]
         sm = np.concatenate([self.smem[self.hop:], np.zeros(self.hop, F)])
         sm[: self.n - self.hop] += y[self.hop:]
         self.smem = sm[: self.n - self.hop].astype(F)
         return res.astype(F)
 
-    def process(self, x):
+    def process(self, x: Array) -> F32Array:
         x = np.concatenate([np.asarray(x, F), np.zeros((-len(x)) % self.hop, F)])
         out = np.zeros(len(x), F)
         for i in range(0, len(x), self.hop):

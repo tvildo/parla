@@ -15,3 +15,5 @@ examples/*/dist/
 xcuserdata/
 *.xcuserstate
 .DS_Store
+.venv/
+.mypy_cache/

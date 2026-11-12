@@ -14,13 +14,13 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from onnx2graph import convert, write_package  # noqa: E402
+from onnx2graph import States, convert, write_package  # noqa: E402
 
 
-def main():
+def main() -> None:
     src, out = Path(sys.argv[1]), sys.argv[2]
     onnx = src / "nsnet2-20ms-baseline.onnx"
-    states = []
+    states: States = []
     nodes, inits, gi, gs, vals = convert(str(onnx), states, "input", "output", stream_rnn=True)
     nodes.append({"op": "Clip", "name": "mingain", "inputs": ["output"], "outputs": ["gain"], "attrs": {"min": 1e-4, "max": 1.0}})
     man = json.loads(Path("tools/specs/nsnet2.json").read_text())

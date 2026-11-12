@@ -19,18 +19,21 @@ How the project is laid out, built and tested.
 | `AGENTS.md` (here and in `src/engine`, `src/engine/vi_otel`, `src/extension`, `src/sdk`) | notes for AI coding agents and contributors: how each part works, decisions, verified numbers |
 | `.github/workflows/ci.yml` | build and test on every push; releases from `master` ([releasing](releasing.md)) |
 | `build.py` | every build step (Python standard library only) |
+| `pyproject.toml`, `uv.lock` | the Python tools' dependencies (numpy, soundfile; mypy), locked with [uv](https://docs.astral.sh/uv/) |
 | `Dockerfile` | the website as a container (nginx on :8080) |
 
 ## Build
 
 Needs Rust (the version in `src/engine/rust-toolchain.toml`; rustup installs it), [binaryen](https://github.com/WebAssembly/binaryen)'s
-`wasm-opt` (on `PATH` or `WASM_OPT`), Node 24+, Python 3.10+, and Docker for the tests. Install npm packages with
+`wasm-opt` (on `PATH` or `WASM_OPT`), Node 24+ with npm 11.10+ (it honours the 3-day minimum release age in the
+`.npmrc` files), Python 3.11+, [uv](https://docs.astral.sh/uv/) for `check` and the
+model tools, and Docker for the tests. Install npm packages with
 `npm ci` (the lockfiles); every project's `.npmrc` turns install scripts off. How the build is pinned:
 [releasing → supply chain](releasing.md#supply-chain).
 
 ```sh
 python build.py wasm                        # the engine -> build/wasm/
-python build.py check                       # type-check all the TypeScript
+python build.py check                       # type-check all the TypeScript and Python
 python build.py extension                   # Chrome / Edge -> build/extension/ (--zip for the store)
 python build.py extension --browser firefox # Firefox -> build/extension-firefox/
 python build.py npm                         # the npm package -> build/npm/ + build/tvildo-parla-<version>.tgz
@@ -72,11 +75,27 @@ stripping); browsers get JavaScript:
 - `python build.py ts` (the extension and SDK builds run it): `tsc` checks the browser code and writes the SDK's `.d.ts`
   files, `tools/ts_emit.ts` writes the JavaScript to `build/js/` with the types erased by Node: every line and column
   stays where it is in the source, comments too, so the shipped files and stack traces read like the source.
-- `python build.py check` (or `npm run check`): type-check everything: the browser code (`tsconfig.json`), the build
-  scripts and tools (`tsconfig.node.json`), the browser tests (`tests/tsconfig.json`).
+- `python build.py check`: type-check everything: the browser code (`tsconfig.json`), the build scripts and tools
+  (`tsconfig.node.json`), the browser tests (`tests/tsconfig.json`), then the Python (below). `npm run check` does the
+  TypeScript part only.
 - Only syntax that can be erased (`erasableSyntaxOnly`: no `enum`, `namespace` or constructor parameter properties).
   Imports name the `.ts` file (`import { Parla } from './parla.ts'`); the emitted JavaScript imports `./parla.js`.
 - The first `build.py ts` / `check` runs `npm ci` here (TypeScript and the type packages: `package.json`).
+
+## Python
+
+`build.py` and the model tools in `tools/*.py` are typed Python, checked with `mypy --strict` (settings in
+`pyproject.toml`). Dependencies are locked with [uv](https://docs.astral.sh/uv/): `pyproject.toml` lists them, `uv.lock`
+pins every version with its checksums, and `.python-version` picks the interpreter uv uses.
+
+- `build.py` needs only the standard library: any `python3` (3.11+) runs it, with nothing to install (the Docker
+  images and CI call it directly).
+- The tools need numpy (and soundfile to read WAV / FLAC): run them in the locked environment, e.g.
+  `uv run python tools/graph_ref.py models/gtcrn in.wav out.f32`. `uv run` creates `.venv/` from `uv.lock` on first use.
+- `python build.py check` runs `uv run --locked mypy`: it fails when `uv.lock` doesn't match `pyproject.toml`. After
+  changing dependencies, run `uv lock` and commit both files. Dependabot updates `uv.lock` weekly.
+- Shapes of the data: `tools/onnx_pb.py` (`Model`, `Graph`, `Node`) for ONNX files, `tools/onnx2graph.py`
+  (`GraphNode`) and `tools/graph_ref.py` (`Json`, `Attrs`: values parsed from JSON stay `Any`) for packages.
 
 ## Translations
 

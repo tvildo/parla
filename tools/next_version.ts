@@ -34,7 +34,9 @@ const SITE_ONLY = [
   /^docs\//, /\.md$/,      // documentation (the npm page's README follows with the next release)
   /^tests\//, /^examples\//,
   /^\.github\//, /^\.gitignore$/,
-  /^tools\/next_version\.ts$/, /^tools\/release\//,
+  /^tools\/next_version\.ts$/, /^tools\/release\//, /^tools\/release_age\.ts$/,
+  // the Python model tools and their locked environment: no build runs them (a regenerated model changes models/)
+  /^tools\/[^/]+\.py$/, /^pyproject\.toml$/, /^uv\.lock$/, /^\.python-version$/,
 ];
 const siteOnly = (f: string) => SITE_ONLY.some((r) => r.test(f));
 

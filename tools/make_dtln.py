@@ -14,19 +14,10 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from onnx2graph import convert, write_package  # noqa: E402
+from onnx2graph import GraphNode, convert, prefixed, write_package  # noqa: E402
 
 
-def prefixed(nodes, inits, ginputs, gstates, pfx, keep_inputs):
-    ren = lambda t: t if (not t or t in keep_inputs) else pfx + t  # noqa: E731
-    nodes = [{**n, "name": pfx + n["name"], "inputs": [ren(i) for i in n["inputs"]], "outputs": [ren(o) for o in n["outputs"]]} for n in nodes]
-    inits = {pfx + k: v for k, v in inits.items()}
-    ginputs = [{**g, "name": ren(g["name"])} for g in ginputs]
-    gstates = [{**s, "in": ren(s["in"]), "out": ren(s["out"])} for s in gstates]
-    return nodes, inits, ginputs, gstates
-
-
-def main():
+def main() -> None:
     src, out = Path(sys.argv[1]), sys.argv[2]
     m1 = src / "pretrained_model_model_1.onnx"
     m2 = src / "pretrained_model_model_2.onnx"
@@ -34,20 +25,20 @@ def main():
     n2, i2, g2, s2, _ = convert(str(m2), [("input_5", "tf_op_layer_stack_5")], "input_4", "conv1d_3")
     n1, i1, g1, s1 = prefixed(n1, i1, g1, s1, "s1/", set())
     n2, i2, g2, s2 = prefixed(n2, i2, g2, s2, "s2/", set())
-    glue_a = [
+    glue_a: list[GraphNode] = [
         {"op": "Rfft", "name": "rfft", "inputs": ["frame"], "outputs": ["spec"]},                       # [1,257,2]
         {"op": "Mul", "name": "sq", "inputs": ["spec", "spec"], "outputs": ["spec_sq"]},
         {"op": "ReduceSum", "name": "pow", "inputs": ["spec_sq"], "outputs": ["power"], "attrs": {"axes": [-1], "keepdims": 0}},
         {"op": "Sqrt", "name": "mag", "inputs": ["power"], "outputs": ["mag"]},
         {"op": "Reshape", "name": "to_s1", "inputs": ["mag"], "outputs": ["s1/input_2"], "attrs": {"shape": [1, 1, 257]}},
     ]
-    glue_b = [
+    glue_b: list[GraphNode] = [
         {"op": "Reshape", "name": "mask_r", "inputs": ["s1/activation_2"], "outputs": ["mask"], "attrs": {"shape": [1, 257, 1]}},
         {"op": "Mul", "name": "apply_mask", "inputs": ["spec", "mask"], "outputs": ["spec_m"]},
         {"op": "Irfft", "name": "irfft", "inputs": ["spec_m"], "outputs": ["y"], "attrs": {"n": 512}},
         {"op": "Reshape", "name": "to_s2", "inputs": ["y"], "outputs": ["s2/input_4"], "attrs": {"shape": [1, 1, 512]}},
     ]
-    glue_c = [{"op": "Reshape", "name": "out", "inputs": ["s2/conv1d_3"], "outputs": ["out_frame"], "attrs": {"shape": [1, 512]}}]
+    glue_c: list[GraphNode] = [{"op": "Reshape", "name": "out", "inputs": ["s2/conv1d_3"], "outputs": ["out_frame"], "attrs": {"shape": [1, 512]}}]
     nodes = glue_a + n1 + glue_b + n2 + glue_c
     inits = {**i1, **i2}
     ginputs = [{"name": "frame", "shape": [1, 512]}] + [g for g in g1 + g2 if g["name"] in {s["in"] for s in s1 + s2}]

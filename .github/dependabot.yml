@@ -1,4 +1,5 @@
 # Keeps every pin current (supply chain: pinned + updated, never floating): GitHub actions (commit SHAs), npm lockfiles,
+# the Python lockfile (uv.lock),
 # Docker base images (digests). Pull requests go to `development`, where CI builds and tests them.
 version: 2
 updates:
@@ -20,6 +21,15 @@ updates:
     open-pull-requests-limit: 5
     groups:
       minor-and-patch: { update-types: [minor, patch] }
+
+  - package-ecosystem: uv
+    # the Python tools' lockfile (pyproject.toml, uv.lock): numpy, soundfile, mypy
+    directory: /
+    target-branch: development
+    schedule: { interval: weekly }
+    cooldown: { default-days: 7 }   # a release must be a week old: most malicious versions are caught by then
+    groups:
+      python: { patterns: ["*"] }
 
   - package-ecosystem: docker
     directories: [/, /tests]

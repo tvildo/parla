@@ -7,11 +7,27 @@ Rust engine uses f32.
 """
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any, NotRequired, TypedDict
 
 import numpy as np
+import numpy.typing as npt
 
 F = np.float32
+Array = npt.NDArray[Any]
+F32Array = npt.NDArray[np.float32]
+C64Array = npt.NDArray[np.complex64]
+Scalar = float | np.floating[Any]
+
+
+class Layer(TypedDict):
+    W: F32Array            # [inputs][gates * neurons]
+    b: F32Array
+    act: str
+    n: int                 # neurons
+    R: NotRequired[F32Array]   # GRU recurrent weights [neurons][3 * neurons]
+
 FRAME = 480
 WIN = 960
 FREQ = 481
@@ -28,7 +44,7 @@ WINDOW = np.concatenate([HALF, HALF[::-1]])
 DCT = np.array([[np.cos((i + .5) * j * np.pi / NB) * (np.sqrt(.5) if j == 0 else 1) for j in range(NB)] for i in range(NB)], F)
 
 
-def band_energy(X):
+def band_energy(X: C64Array) -> F32Array:
     p = (X.real ** 2 + X.imag ** 2).astype(F)
     s = np.zeros(NB, F)
     for i in range(NB - 1):
@@ -41,7 +57,7 @@ def band_energy(X):
     return s
 
 
-def band_corr(X, P):
+def band_corr(X: C64Array, P: C64Array) -> F32Array:
     p = (X.real * P.real + X.imag * P.imag).astype(F)
     s = np.zeros(NB, F)
     for i in range(NB - 1):
@@ -54,7 +70,7 @@ def band_corr(X, P):
     return s
 
 
-def interp_gain(b):
+def interp_gain(b: F32Array) -> F32Array:
     g = np.zeros(FREQ, F)
     for i in range(NB - 1):
         a, n = EBAND[i] << 2, (EBAND[i + 1] - EBAND[i]) << 2
@@ -63,24 +79,24 @@ def interp_gain(b):
     return g
 
 
-def dct(x):
+def dct(x: F32Array) -> F32Array:
     return (x @ DCT * F(np.sqrt(2. / 22))).astype(F)
 
 
-def fwd(x):
+def fwd(x: F32Array) -> C64Array:
     return (np.fft.rfft(x.astype(np.float64)) / WIN).astype(np.complex64)
 
 
-def inv(X):
+def inv(X: C64Array) -> F32Array:
     return (np.fft.irfft(X.astype(np.complex128), WIN) * WIN).astype(F)
 
 
-def autocorr(x, lag):
+def autocorr(x: F32Array, lag: int) -> F32Array:
     n = len(x)
     return np.array([np.dot(x[:n - k], x[k:]) for k in range(lag + 1)], F)
 
 
-def lpc(ac, p):
+def lpc(ac: F32Array, p: int) -> F32Array:
     a = np.zeros(p, F)
     err = ac[0]
     if ac[0] != 0:
@@ -101,7 +117,7 @@ def lpc(ac, p):
     return a
 
 
-def pitch_downsample(x):
+def pitch_downsample(x: F32Array) -> F32Array:
     n = len(x) >> 1
     xl = np.zeros(n, F)
     xl[1:] = .5 * (.5 * (x[1:2 * n - 1:2] + x[3:2 * n + 1:2]) + x[2:2 * n:2])
@@ -127,7 +143,7 @@ def pitch_downsample(x):
     return y
 
 
-def find_best_pitch(xc, y, ln, maxp):
+def find_best_pitch(xc: F32Array, y: F32Array, ln: int, maxp: int) -> list[int]:
     syy = F(1)
     bn, bd, bp = [F(-1), F(-1)], [F(0), F(0)], [0, 1]
     syy = F(1) + np.sum(y[:ln] * y[:ln], dtype=F)
@@ -146,7 +162,7 @@ def find_best_pitch(xc, y, ln, maxp):
     return bp
 
 
-def pitch_search(xl, y, ln, maxp):
+def pitch_search(xl: F32Array, y: F32Array, ln: int, maxp: int) -> int:
     lag = ln + maxp
     x4 = xl[0:ln >> 1:2][:ln >> 2]
     y4 = y[0:lag >> 1:2][:lag >> 2]
@@ -171,11 +187,11 @@ def pitch_search(xl, y, ln, maxp):
 SECOND = [0, 0, 3, 2, 3, 2, 5, 2, 3, 2, 3, 2, 5, 2, 3, 2]
 
 
-def gain_(xy, xx, yy):
+def gain_(xy: Scalar, xx: Scalar, yy: Scalar) -> np.float32:
     return F(xy / np.sqrt(F(1) + xx * yy))
 
 
-def remove_doubling(xfull, maxp, minp, N, T0in, prevp, prevg):
+def remove_doubling(xfull: F32Array, maxp: int, minp: int, N: int, T0in: int, prevp: int, prevg: Scalar) -> tuple[int, np.float32]:
     minp0 = minp
     maxp //= 2
     minp //= 2
@@ -238,27 +254,30 @@ def remove_doubling(xfull, maxp, minp, N, T0in, prevp, prevg):
     return T0out, pg
 
 
-def sig(x):
+def sig(x: Array) -> F32Array:
     return (1 / (1 + np.exp(-x))).astype(F)
 
 
+ACTIVATIONS: dict[str, Callable[[Array], Array]] = {"tanh": np.tanh, "sigmoid": sig, "relu": lambda v: np.maximum(v, 0)}
+
+
 class RNNoise:
-    def __init__(self, pkg):
+    def __init__(self, pkg: str | Path) -> None:
         pkg = Path(pkg)
         man = json.loads((pkg / "manifest.json").read_text())
         w = np.fromfile(pkg / "weights.bin", "<f4")
-        self.L = {}
+        self.L: dict[str, Layer] = {}
         for e in man["config"]["layers"]:
             t = {k: w[v["offset"]:v["offset"] + v["size"]] for k, v in e["tensors"].items()}
             g = 3 if "recurrent_weights" in t else 1
-            ent = {"W": t["weights"].reshape(e["inputs"], g * e["neurons"]), "b": t["bias"], "act": e["activation"], "n": e["neurons"]}
+            ent: Layer = {"W": t["weights"].reshape(e["inputs"], g * e["neurons"]), "b": t["bias"], "act": e["activation"], "n": e["neurons"]}
             if g == 3:
                 ent["R"] = t["recurrent_weights"].reshape(e["neurons"], 3 * e["neurons"])
             self.L[e["name"]] = ent
-        self.scale = man["config"].get("input_scale", 32768.0)
+        self.scale: float = man["config"].get("input_scale", 32768.0)
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self.analysis = np.zeros(FRAME, F)
         self.ceps = np.zeros((CEPS_MEM, NB), F)
         self.memid = 0
@@ -266,18 +285,18 @@ class RNNoise:
         self.pbuf = np.zeros(PBUF, F)
         self.last_gain = F(0)
         self.last_period = 0
-        self.hp = [0.0, 0.0]
+        self.hp: list[float] = [0.0, 0.0]
         self.lastg = np.zeros(NB, F)
         self.h = {k: np.zeros(v["n"], F) for k, v in self.L.items() if "R" in v}
 
-    def act(self, x, a):
-        return {"tanh": np.tanh, "sigmoid": sig, "relu": lambda v: np.maximum(v, 0)}[a](x).astype(F)
+    def act(self, x: Array, a: str) -> F32Array:
+        return ACTIVATIONS[a](x).astype(F)
 
-    def dense(self, name, x):
+    def dense(self, name: str, x: Array) -> F32Array:
         L = self.L[name]
         return self.act(x @ L["W"] + L["b"], L["act"])
 
-    def gru(self, name, x):
+    def gru(self, name: str, x: Array) -> F32Array:
         L = self.L[name]
         n, h = L["n"], self.h[name]
         gx = x @ L["W"] + L["b"]
@@ -287,7 +306,7 @@ class RNNoise:
         self.h[name] = (z * h + (1 - z) * c).astype(F)
         return self.h[name]
 
-    def rnn(self, f):
+    def rnn(self, f: F32Array) -> tuple[F32Array, F32Array]:
         d = self.dense("input_dense", f)
         v = self.gru("vad_gru", d)
         vad = self.dense("vad_output", v)
@@ -295,7 +314,7 @@ class RNNoise:
         dn = self.gru("denoise_gru", np.concatenate([v, n, f]))
         return self.dense("denoise_output", dn), vad
 
-    def frame(self, inp):
+    def frame(self, inp: F32Array) -> F32Array:
         # high-pass biquad (b = [-2, 1], a = [-1.99599, 0.99600]) in double, stored as float
         x = np.zeros(FRAME, F)
         m0, m1 = self.hp
@@ -356,7 +375,7 @@ class RNNoise:
             for i in range(CEPS_MEM):
                 d = np.sum((self.ceps[i][None, :] - self.ceps) ** 2, axis=1, dtype=F)
                 d[i] = F(1e15)
-                sv += min(F(1e15), d.min())
+                sv += min(F(1e15), np.min(d))
             feat[NB + 3 * NDC + 1] = sv / CEPS_MEM - F(2.1)
             gains, vad = self.rnn(feat)
             # pitch filter
@@ -370,11 +389,11 @@ class RNNoise:
             self.lastg = gains
             Y = (X * interp_gain(gains)).astype(np.complex64)
         y = inv(Y) * WINDOW
-        out = y[:FRAME] + self.synth
+        out: F32Array = y[:FRAME] + self.synth
         self.synth = y[FRAME:].copy()
         return out
 
-    def process(self, x):
+    def process(self, x: Array) -> F32Array:
         x = np.concatenate([np.asarray(x, F) * F(self.scale), np.zeros((-len(x)) % FRAME, F)])
         out = np.zeros(len(x), F)
         for i in range(0, len(x), FRAME):

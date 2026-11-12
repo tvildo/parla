@@ -18,17 +18,22 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from onnx2graph import convert, write_package  # noqa: E402
+from graph_ref import Json  # noqa: E402
+from onnx2graph import convert, prefixed, write_package  # noqa: E402
 
 
-def erb_fb(sr, fft_size, nb_bands, min_nb_freqs):
+def erb_fb(sr: int, fft_size: int, nb_bands: int, min_nb_freqs: int) -> list[int]:
     """ERB band widths (bins) — published formula (freq2erb = 9.265 ln(1 + f / (24.7*9.265)))."""
-    f2e = lambda f: 9.265 * math.log1p(f / (24.7 * 9.265))  # noqa: E731
-    e2f = lambda e: 24.7 * 9.265 * (math.exp(e / 9.265) - 1)  # noqa: E731
+    def f2e(f: float) -> float:
+        return 9.265 * math.log1p(f / (24.7 * 9.265))
+
+    def e2f(e: float) -> float:
+        return 24.7 * 9.265 * (math.exp(e / 9.265) - 1)
     lo, hi = f2e(0), f2e(sr // 2)
     step = (hi - lo) / nb_bands
     fw = sr / fft_size
-    erb, prev, over = [], 0, 0
+    erb: list[int] = []
+    prev = over = 0
     for i in range(1, nb_bands + 1):
         fb = int(round(e2f(lo + i * step) / fw + 1e-9)) if False else int(math.floor(e2f(lo + i * step) / fw + 0.5))
         nb = fb - prev - over
@@ -47,7 +52,7 @@ def erb_fb(sr, fft_size, nb_bands, min_nb_freqs):
     return erb
 
 
-def norm_alpha(sr, hop, tau):
+def norm_alpha(sr: int, hop: int, tau: float) -> float:
     a0 = math.exp(-(hop / sr) / tau)
     a, prec = 1.0, 3
     while a >= 1.0:
@@ -56,13 +61,7 @@ def norm_alpha(sr, hop, tau):
     return a
 
 
-def prefixed(nodes, inits, gin, gst, pfx, keep):
-    ren = lambda t: t if (not t or t in keep) else pfx + t  # noqa: E731
-    nodes = [{**n, "name": pfx + n["name"], "inputs": [ren(i) for i in n["inputs"]], "outputs": [ren(o) for o in n["outputs"]]} for n in nodes]
-    return nodes, {pfx + k: v for k, v in inits.items()}, [{**g, "name": ren(g["name"])} for g in gin], [{**s, "in": ren(s["in"]), "out": ren(s["out"])} for s in gst]
-
-
-def main():
+def main() -> None:
     src, out = Path(sys.argv[1]), sys.argv[2]
     d = src / "onnx/tmp/export"
     cfg = configparser.ConfigParser()
@@ -86,7 +85,7 @@ def main():
     sr, fft, hop = int(df["sr"]), int(df["fft_size"]), int(df["hop_size"])
     erb = erb_fb(sr, fft, int(df["nb_erb"]), int(df["min_nb_erb_freqs"]))
     up = {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in [src / "models_DeepFilterNet3_onnx.tar.gz"]}
-    man = {
+    man: Json = {
         "display_name": "DeepFilterNet3 (48 kHz, ERB gains + deep filtering)",
         "license": "MIT OR Apache-2.0 (Copyright Hendrik Schroeter; LICENSE-MIT / LICENSE-APACHE)",
         "source": "https://github.com/Rikorose/DeepFilterNet/blob/d375b2d8309e0935d165700c91da9de862a99c31/models/DeepFilterNet3_onnx.tar.gz",

@@ -1,0 +1,33 @@
+# The repository's Python: build.py (standard library only, so it runs on any python3 without installing anything)
+# and the model tools in tools/ (converters, packagers, numpy reference executors, checks), which need numpy.
+# Dependencies are locked with uv (uv.lock); `uv run python tools/<tool>.py` runs a tool in the locked environment and
+# `python build.py check` type-checks everything with mypy (strict). docs/development.md, "Python".
+[project]
+name = "parla-tools"
+version = "0"
+description = "Parla's build script and model tools"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.1",
+    "soundfile>=0.13",  # graph_ref.py reads WAV / FLAC inputs from the command line
+]
+
+[dependency-groups]
+dev = ["mypy>=1.18"]
+
+[tool.uv]
+package = false
+exclude-newer = "3 days"   # supply chain: never resolve a release younger than 3 days (docs/releasing.md#supply-chain)
+
+[tool.mypy]
+python_version = "3.11"  # the website image builds with Debian bookworm's python3
+files = ["build.py", "tools"]
+strict = true
+warn_unreachable = true
+mypy_path = "tools"
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["soundfile"]
+ignore_missing_imports = true

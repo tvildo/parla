@@ -5,7 +5,7 @@
     python build.py native                                      vi_cli (native engine runner)
     python build.py regress [--record]                          every model package, bit-exact vs tests/golden.json
     python build.py ts                                          the TypeScript for browsers -> build/js/ (tsc)
-    python build.py check                                       type-check everything (browser code, scripts, tests)
+    python build.py check                                       type-check everything (TypeScript; Python with mypy via uv)
     python build.py extension [--zip]                           the browser extension -> build/extension/
     python build.py safari [--version X.Y.Z] [--ios]            the Safari app (macOS + Xcode) -> build/safari/
     python build.py sdk                                         the SDK as files for an app -> build/sdk/
@@ -18,7 +18,8 @@
     python build.py telemetry-deploy [--sample S] [--daily-limit N]  the report receiver -> Cloudflare (t.parla.cc)
 
 Needs: Rust (rustup target add wasm32-unknown-unknown), binaryen's wasm-opt (WASM_OPT or on PATH), Node 24+ (it runs
-the build scripts' TypeScript as is; `npm ci` here installs the compiler); Docker for `test`.
+the build scripts' TypeScript as is; `npm ci` here installs the compiler); Docker for `test`; uv for `check` (the
+Python tools' locked environment, pyproject.toml + uv.lock). This script itself needs only python3.
 """
 from __future__ import annotations
 
@@ -28,6 +29,7 @@ import http.server
 import json
 import math
 import os
+import platform
 import re
 import shutil
 import struct
@@ -35,6 +37,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any, BinaryIO
 
 ROOT = Path(__file__).resolve().parent
 BUILD = ROOT / "build"
@@ -155,7 +158,6 @@ def test_signal(rate: int, seconds: float = 6.0) -> bytes:
 
 
 def platform_key() -> str:
-    import platform
     return f"{platform.machine()}-{sys.platform}"
 
 
@@ -217,9 +219,15 @@ def cmd_ts(args: list[str]) -> None:
 
 
 def cmd_check(args: list[str]) -> None:
-    """Type-check all TypeScript: the browser code, the build scripts and tools, the browser tests."""
+    """Type-check everything: the TypeScript (browser code, build scripts and tools, browser tests) and the Python
+    (this script and tools/*.py, mypy --strict in the environment locked by uv.lock)."""
     for project in ("tsconfig.json", "tsconfig.node.json", "tests/tsconfig.json"):
         tsc("-p", project, "--noEmit", "--emitDeclarationOnly", "false")
+    uv = shutil.which("uv")
+    if not uv:
+        raise SystemExit("error: uv not found (https://docs.astral.sh/uv/getting-started/installation/); "
+                         "it runs mypy in the locked Python environment (pyproject.toml, uv.lock)")
+    run([uv, "run", "--locked", "mypy"], cwd=ROOT)
 
 
 def cmd_extension(args: list[str]) -> None:
@@ -250,7 +258,7 @@ def cmd_safari(args: list[str]) -> None:
     version = args[args.index("--version") + 1] if "--version" in args else None
     cmd_extension(["--browser", "safari", *(["--version", version] if version else [])])
     safari_check()
-    if sys.platform != "darwin" or not shutil.which("xcodebuild"):
+    if platform.system() != "Darwin" or not shutil.which("xcodebuild"):
         print("safari: build/extension-safari is ready; the app itself is built on a Mac with Xcode (python build.py safari)")
         return
     version = version or json.loads((BUILD / "extension-safari" / "manifest.json").read_text(encoding="utf-8"))["version"]
@@ -355,16 +363,17 @@ def cmd_serve(args: list[str]) -> None:
         extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map,
                           ".wasm": "application/wasm", ".js": "text/javascript", ".mjs": "text/javascript",
                           ".json": "application/json", ".bin": "application/octet-stream", ".webm": "video/webm"}
+        _left: int | None = None   # bytes still to send of a range answer
 
-        def __init__(self, *x, **k):
+        def __init__(self, *x: Any, **k: Any) -> None:
             super().__init__(*x, directory=str(root), **k)
 
-        def end_headers(self):
+        def end_headers(self) -> None:
             self.send_header("Cache-Control", "no-store")
             self.send_header("Accept-Ranges", "bytes")
             super().end_headers()
 
-        def send_head(self):
+        def send_head(self) -> BinaryIO | None:
             # single byte ranges, so media elements can seek (the stdlib ignores Range)
             rng = re.fullmatch(r"bytes=(\d*)-(\d*)", self.headers.get("Range", ""))
             p = Path(self.translate_path(self.path))
@@ -386,8 +395,8 @@ def cmd_serve(args: list[str]) -> None:
             self._left = end - start + 1
             return f
 
-        def copyfile(self, src, dst):
-            left = getattr(self, "_left", None)
+        def copyfile(self, src: Any, dst: Any) -> None:
+            left = self._left
             if left is None:
                 return super().copyfile(src, dst)
             while left > 0:
@@ -398,7 +407,7 @@ def cmd_serve(args: list[str]) -> None:
                 left -= len(b)
             self._left = None
 
-        def log_message(self, *x):
+        def log_message(self, *x: Any) -> None:
             pass
 
     print(f"serving {root} at http://127.0.0.1:{a.port}/", flush=True)
@@ -465,7 +474,7 @@ def cmd_telemetry_deploy(args: list[str]) -> None:
     if not token or not acct:
         raise SystemExit("error: set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID")
 
-    def cf(method: str, path: str, body: object = None, raw: bytes | None = None, ctype: str = "application/json") -> object:
+    def cf(method: str, path: str, body: object = None, raw: bytes | None = None, ctype: str = "application/json") -> Any:
         data = raw if raw is not None else (None if body is None else json.dumps(body).encode())
         req = urllib.request.Request(CF_API + path, method=method, data=data,
                                      headers={"Authorization": f"Bearer {token}", "Content-Type": ctype})
@@ -482,7 +491,7 @@ def cmd_telemetry_deploy(args: list[str]) -> None:
     code = (BUILD / "js" / "src" / "telemetry" / "worker.js").read_text(encoding="utf-8")
     scripts = cf("GET", f"/accounts/{acct}/workers/scripts")
     current = next((x for x in scripts if x.get("id") == a.name), None)
-    meta: dict = {"main_module": "worker.js", "compatibility_date": "2026-10-01",
+    meta: dict[str, Any] = {"main_module": "worker.js", "compatibility_date": "2026-10-01",
                   "bindings": [
                       {"type": "plain_text", "name": "SAMPLE", "text": str(a.sample)},
                       {"type": "plain_text", "name": "DAILY_LIMIT", "text": str(a.daily_limit)},

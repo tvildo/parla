@@ -32,6 +32,7 @@ permissions:
 
 env:
   NODE_VERSION: 26.13.0
+  UV_VERSION: 0.13.7
   BINARYEN: version_133
   BINARYEN_SHA256: 2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489
 
@@ -96,6 +97,16 @@ jobs:
           tar xzf "$RUNNER_TEMP/binaryen.tgz" -C "$RUNNER_TEMP"
           echo "WASM_OPT=$RUNNER_TEMP/binaryen-$BINARYEN/bin/wasm-opt" >> "$GITHUB_ENV"
 
+      # supply chain: every package version this change adds to a lockfile was published at least 3 days ago
+      - name: New dependencies are at least 3 days old (tools/release_age.ts)
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          base="$BASE"
+          if [ -z "$base" ] || [ "$base" = 0000000000000000000000000000000000000000 ]; then base=master; fi
+          git fetch --no-tags --depth=1 origin "$base"
+          node tools/release_age.ts --base FETCH_HEAD
+
       - name: npm ci from the lockfiles (no install scripts), registry signatures verified
         run: |
           npm ci --no-audit --no-fund
@@ -103,7 +114,13 @@ jobs:
           npm audit signatures
           npm audit signatures --prefix tests
 
-      - name: Type-check
+      # the Python tools' environment (pyproject.toml, uv.lock); no cache: a release job must not restore one
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+
+      - name: Type-check (TypeScript; Python with mypy in the locked environment)
         run: python3 build.py check
 
       - name: Engine (the three builds the extension and the SDK ship)

@@ -9,16 +9,25 @@ validate the Rust engine, and by the converters (constant folding, shape checks)
 import json
 import re
 import sys
+from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 F32 = np.float32
+Array = npt.NDArray[Any]          # any dtype (inputs, folded constants)
+F32Array = npt.NDArray[np.float32]
+F64Array = npt.NDArray[np.float64]
+Attrs = dict[str, Any]            # op attributes as in graph.json / ONNX: ints, floats, strings and lists of them
+Json = dict[str, Any]             # parsed graph.json / manifest.json (models/FORMAT.md)
+Inputs = Sequence[Array | None]   # op inputs (None = omitted optional input)
 
 # ------------------------------------------------------------------ dims
 
 
-def dim(v, T):
+def dim(v: int | float | str | np.integer[Any], T: int) -> int:
     """int or affine string in T ("40*T+40") -> int."""
     if isinstance(v, (int, np.integer)):
         return int(v)
@@ -39,22 +48,22 @@ def dim(v, T):
     return tot
 
 
-def dims(v, T):
+def dims(v: Sequence[int | float | str], T: int) -> list[int]:
     return [dim(x, T) for x in v]
 
 
 # ------------------------------------------------------------------ ops
 
 
-def _axes(a, nd):
+def _axes(a: Sequence[int], nd: int) -> list[int]:
     return [x % nd for x in a]
 
 
-def _sig(x):
+def _sig(x: Array) -> F32Array:
     return (1.0 / (1.0 + np.exp(-x))).astype(F32)
 
 
-def conv(x, w, b, a):
+def conv(x: Array, w: Array, b: Array | None, a: Attrs) -> F32Array:
     """ONNX Conv, N-C-spatial, 1-D or 2-D, direct im2col."""
     nd = w.ndim - 2
     ks = list(w.shape[2:])
@@ -93,7 +102,7 @@ def conv(x, w, b, a):
     return y.astype(F32)
 
 
-def conv_transpose(x, w, b, a):
+def conv_transpose(x: Array, w: Array, b: Array | None, a: Attrs) -> F32Array:
     nd = w.ndim - 2
     ks = list(w.shape[2:])
     st = a.get("strides", [1] * nd)
@@ -129,8 +138,8 @@ def conv_transpose(x, w, b, a):
     return np.ascontiguousarray(y, F32)
 
 
-def _rnn(ins, a, lstm):
-    X, W, R = ins[0], ins[1], ins[2]
+def _rnn(ins: Inputs, a: Attrs, lstm: bool) -> list[F32Array]:
+    X, W, R = _need(ins, 0, "X"), _need(ins, 1, "W"), _need(ins, 2, "R")
     B = ins[3] if len(ins) > 3 else None
     h0 = ins[5] if len(ins) > 5 else None
     c0 = ins[6] if len(ins) > 6 else None
@@ -169,15 +178,15 @@ def _rnn(ins, a, lstm):
     return [Y, Yh, Yc] if lstm else [Y, Yh]
 
 
-def gru(ins, a):
+def gru(ins: Inputs, a: Attrs) -> list[F32Array]:
     return _rnn(ins, a, False)
 
 
-def lstm(ins, a):
+def lstm(ins: Inputs, a: Attrs) -> list[F32Array]:
     return _rnn(ins, a, True)
 
 
-def _slice(x, a):
+def _slice(x: Array, a: Attrs) -> Array:
     axes = a.get("axes", list(range(len(a["starts"]))))
     steps = a.get("steps", [1] * len(axes))
     for s, e, ax, st in zip(a["starts"], a["ends"], axes, steps):
@@ -187,7 +196,7 @@ def _slice(x, a):
     return x
 
 
-def _reshape(x, shape):
+def _reshape(x: Array, shape: Sequence[int]) -> Array:
     shape = list(shape)
     for i, s in enumerate(shape):
         if s == 0:
@@ -195,7 +204,7 @@ def _reshape(x, shape):
     return x.reshape(shape)
 
 
-def _pad(x, a):
+def _pad(x: Array, a: Attrs) -> Array:
     p = a["pads"]
     nd = x.ndim
     pw = [(p[i], p[i + nd]) for i in range(nd)]
@@ -206,10 +215,14 @@ def _pad(x, a):
         pw = [(max(0, b), max(0, e)) for b, e in pw]
     if mode == "constant":
         return np.pad(x, pw, constant_values=a.get("value", 0.0))
-    return np.pad(x, pw, mode={"reflect": "reflect", "edge": "edge"}[mode])
+    if mode == "reflect":
+        return np.pad(x, pw, mode="reflect")
+    if mode == "edge":
+        return np.pad(x, pw, mode="edge")
+    raise KeyError(mode)
 
 
-def _scatter_nd(data, idx, upd):
+def _scatter_nd(data: Array, idx: Array, upd: Array) -> Array:
     out = data.copy()
     idx = idx.astype(np.int64)
     k = idx.shape[-1]
@@ -220,7 +233,7 @@ def _scatter_nd(data, idx, upd):
     return out
 
 
-def channel_norm(x, g, b, a):
+def channel_norm(x: Array, g: Array, b: Array, a: Attrs) -> F32Array:
     ax = a.get("axis", 1) % x.ndim
     m = x.mean(axis=ax, keepdims=True, dtype=F32)
     d = x - m
@@ -231,7 +244,7 @@ def channel_norm(x, g, b, a):
     return (g.reshape(shp) * d / sd + b.reshape(shp)).astype(F32)
 
 
-def layer_norm(x, g, b, a):
+def layer_norm(x: Array, g: Array, b: Array | None, a: Attrs) -> F32Array:
     ax = a.get("axis", -1) % x.ndim
     axes = tuple(range(ax, x.ndim))
     m = x.mean(axis=axes, keepdims=True)
@@ -243,24 +256,46 @@ def layer_norm(x, g, b, a):
     return y.astype(F32)
 
 
-def run_op(op, ins, a):
+def _need(ins: Inputs, i: int, what: str) -> Array:
+    """A required op input."""
+    v = ins[i] if i < len(ins) else None
+    if v is None:
+        raise ValueError(f"missing input {i} ({what})")
+    return v
+
+
+def _opt(ins: Inputs, i: int) -> Array | None:
+    """An optional op input (absent or omitted)."""
+    return ins[i] if i < len(ins) else None
+
+
+UNARY: dict[str, Callable[[Array], Array]] = {
+    "Relu": lambda v: np.maximum(v, 0), "Sigmoid": _sig, "Tanh": np.tanh, "Sqrt": np.sqrt, "Abs": np.abs,
+    "Exp": np.exp, "Log": np.log, "Neg": np.negative, "Reciprocal": lambda v: 1 / v, "Identity": lambda v: v.copy(),
+    "Cast": lambda v: v.astype(F32),
+    "Softplus": lambda v: np.log1p(np.exp(v))}
+BINARY: dict[str, Callable[[Array, Array], Array]] = {
+    "Add": np.add, "Sub": np.subtract, "Mul": np.multiply, "Div": np.divide, "Pow": np.power,
+    "Max": np.maximum, "Min": np.minimum}
+REDUCE: dict[str, Callable[..., Any]] = {"ReduceMean": np.mean, "ReduceSum": np.sum, "ReduceMax": np.max}
+
+
+def run_op(op: str, ins: Inputs, a: Attrs) -> list[Array]:
     """Execute one op. ins: list of np arrays (None = omitted). Returns list of outputs."""
-    x = ins[0] if ins else None
-    un = {"Relu": lambda v: np.maximum(v, 0), "Sigmoid": _sig, "Tanh": np.tanh, "Sqrt": np.sqrt, "Abs": np.abs,
-          "Exp": np.exp, "Log": np.log, "Neg": np.negative, "Reciprocal": lambda v: 1 / v, "Identity": lambda v: v.copy(),
-          "Cast": lambda v: v.astype(F32),
-          "Softplus": lambda v: np.log1p(np.exp(v))}
-    bi = {"Add": np.add, "Sub": np.subtract, "Mul": np.multiply, "Div": np.divide, "Pow": np.power,
-          "Max": np.maximum, "Min": np.minimum}
-    if op in un:
-        return [un[op](x).astype(F32)]
-    if op in bi:
-        return [bi[op](x, ins[1]).astype(F32)]
+    if op == "Concat":
+        return [np.concatenate([v for v in ins if v is not None and v.size > 0] or ins, axis=a["axis"]).astype(F32)]
+    if op == "Einsum":  # reference only (converters lower Einsum to MatMul/Transpose/Reshape)
+        return [np.einsum(a["equation"], *(_need(ins, i, "operand") for i in range(len(ins)))).astype(F32)]
+    x = _need(ins, 0, "X")
+    if op in UNARY:
+        return [UNARY[op](x).astype(F32)]
+    if op in BINARY:
+        return [BINARY[op](x, _need(ins, 1, "B")).astype(F32)]
     if op == "LeakyRelu":
         al = F32(a.get("alpha", 0.01))
         return [(np.maximum(x, 0) + al * np.minimum(x, 0)).astype(F32)]
     if op == "PRelu":
-        return [(np.maximum(x, 0) + ins[1] * np.minimum(x, 0)).astype(F32)]
+        return [(np.maximum(x, 0) + _need(ins, 1, "slope") * np.minimum(x, 0)).astype(F32)]
     if op == "Elu":
         al = a.get("alpha", 1.0)
         return [np.where(x > 0, x, al * (np.exp(x) - 1)).astype(F32)]
@@ -269,46 +304,43 @@ def run_op(op, ins, a):
     if op == "Clip":
         return [np.clip(x, a.get("min", -np.inf), a.get("max", np.inf)).astype(F32)]
     if op == "MatMul":
-        return [np.matmul(x, ins[1]).astype(F32)]
+        return [np.matmul(x, _need(ins, 1, "B")).astype(F32)]
     if op == "Gemm":
         A = x.T if a.get("transA", 0) else x
-        B = ins[1].T if a.get("transB", 0) else ins[1]
+        B = _need(ins, 1, "B").T if a.get("transB", 0) else _need(ins, 1, "B")
         y = a.get("alpha", 1.0) * (A @ B)
-        if len(ins) > 2 and ins[2] is not None:
-            y = y + a.get("beta", 1.0) * ins[2]
+        c = _opt(ins, 2)
+        if c is not None:
+            y = y + a.get("beta", 1.0) * c
         return [y.astype(F32)]
     if op in ("Conv", "ConvTranspose", "StreamConv"):
         fn = conv if op != "ConvTranspose" else conv_transpose
         cl = a.get("channels_last", 0)
         xx = np.ascontiguousarray(np.swapaxes(x, 1, 2)) if cl else x
-        y = fn(xx, ins[1], ins[2] if len(ins) > 2 else None, a)
+        y = fn(xx, _need(ins, 1, "W"), _opt(ins, 2), a)
         return [np.ascontiguousarray(np.swapaxes(y, 1, 2)) if cl else y]
     if op == "GRU":
-        return gru(ins, a)
+        return list(gru(ins, a))
     if op == "LSTM":
-        return lstm(ins, a)
+        return list(lstm(ins, a))
     if op == "BatchNormalization":
-        sc, bb, mu, var = ins[1:5]
+        sc, bb, mu, var = (_need(ins, i, "scale, B, mean, var") for i in range(1, 5))
         shp = [1, -1] + [1] * (x.ndim - 2)
         return [((x - mu.reshape(shp)) / np.sqrt(var.reshape(shp) + a.get("epsilon", 1e-5)) * sc.reshape(shp) + bb.reshape(shp)).astype(F32)]
     if op == "ChannelNorm":
-        return [channel_norm(x, ins[1], ins[2], a)]
+        return [channel_norm(x, _need(ins, 1, "scale"), _need(ins, 2, "B"), a)]
     if op == "LayerNormalization":
-        return [layer_norm(x, ins[1], ins[2] if len(ins) > 2 else None, a)]
+        return [layer_norm(x, _need(ins, 1, "scale"), _opt(ins, 2), a)]
     if op == "InstanceNormalization":
         axes = tuple(range(2, x.ndim))
         m = x.mean(axis=axes, keepdims=True)
         v = ((x - m) ** 2).mean(axis=axes, keepdims=True)
         shp = [1, -1] + [1] * (x.ndim - 2)
-        return [((x - m) / np.sqrt(v + a.get("epsilon", 1e-5)) * ins[1].reshape(shp) + ins[2].reshape(shp)).astype(F32)]
-    if op in ("ReduceMean", "ReduceSum", "ReduceMax"):
-        axes = a.get("axes")
-        axes = tuple(_axes(axes, x.ndim)) if axes is not None else None
+        return [((x - m) / np.sqrt(v + a.get("epsilon", 1e-5)) * _need(ins, 1, "scale").reshape(shp) + _need(ins, 2, "B").reshape(shp)).astype(F32)]
+    if op in REDUCE:
+        rax = a.get("axes")
         kd = bool(a.get("keepdims", 1))
-        fn = {"ReduceMean": np.mean, "ReduceSum": np.sum, "ReduceMax": np.max}[op]
-        return [np.asarray(fn(x, axis=axes, keepdims=kd), F32)]
-    if op == "Concat":
-        return [np.concatenate([v for v in ins if v is not None and v.size > 0] or ins, axis=a["axis"]).astype(F32)]
+        return [np.asarray(REDUCE[op](x, axis=tuple(_axes(rax, x.ndim)) if rax is not None else None, keepdims=kd), F32)]
     if op == "Split":
         ax = a.get("axis", 0)
         sp = a["split"]
@@ -316,16 +348,16 @@ def run_op(op, ins, a):
     if op == "Slice":
         return [_slice(x, a).copy()]
     if op == "Gather":
-        return [np.take(x, ins[1].astype(np.int64), axis=a.get("axis", 0)).astype(F32)]
+        return [np.take(x, _need(ins, 1, "indices").astype(np.int64), axis=a.get("axis", 0)).astype(F32)]
     if op == "ScatterND":
-        return [_scatter_nd(x, ins[1], ins[2])]
+        return [_scatter_nd(x, _need(ins, 1, "indices"), _need(ins, 2, "updates"))]
     if op == "Reshape":
         return [_reshape(x, a["shape"]).copy()]
     if op == "Transpose":
         return [np.ascontiguousarray(np.transpose(x, a.get("perm")))]
     if op == "Squeeze":
-        ax = a.get("axes")
-        return [np.squeeze(x, axis=tuple(_axes(ax, x.ndim)) if ax is not None else None).copy()]
+        sax = a.get("axes")
+        return [np.squeeze(x, axis=tuple(_axes(sax, x.ndim)) if sax is not None else None).copy()]
     if op == "Unsqueeze":
         y = x
         nd = x.ndim + len(a["axes"])
@@ -342,7 +374,8 @@ def run_op(op, ins, a):
     if op == "Tile":
         return [np.tile(x, a["repeats"]).astype(F32)]
     if op == "MaxPool":
-        k, st = a["kernel_shape"], a.get("strides", a["kernel_shape"])
+        k: list[int] = a["kernel_shape"]
+        st: list[int] = a.get("strides", k)
         pads = a.get("pads", [0] * (2 * len(k)))
         nd = len(k)
         xp = np.pad(x, [(0, 0), (0, 0)] + [(pads[i], pads[i + nd]) for i in range(nd)], constant_values=-np.inf)
@@ -355,8 +388,6 @@ def run_op(op, ins, a):
                 for j in range(osz[1]):
                     y[:, :, i, j] = xp[:, :, i * st[0]:i * st[0] + k[0], j * st[1]:j * st[1] + k[1]].max(axis=(2, 3))
         return [y.astype(F32)]
-    if op == "Einsum":  # reference only (converters lower Einsum to MatMul/Transpose/Reshape)
-        return [np.einsum(a["equation"], *ins).astype(F32)]
     if op == "Rfft":
         X = np.fft.rfft(x.astype(np.float64), axis=-1)
         return [np.stack([X.real, X.imag], -1).astype(F32)]
@@ -372,9 +403,9 @@ INT_ATTRS = ("shape", "starts", "ends")
 
 
 class Graph:
-    def __init__(self, g, weights, T=1):
+    def __init__(self, g: Json, weights: F32Array, T: int = 1) -> None:
         self.g, self.T = g, T
-        self.consts = {}
+        self.consts: dict[str, Array] = {}
         for name, d in g["initializers"].items():
             shp = dims(d["shape"], T)
             if "value" in d:
@@ -383,22 +414,22 @@ class Graph:
                 n = int(np.prod(shp)) if shp else 1
                 v = weights[d["offset"]:d["offset"] + n].reshape(shp)
             self.consts[name] = v
-        self.inputs = {i["name"]: dims(i["shape"], T) for i in g["inputs"]}
-        self.states = [(s["in"], s["out"]) for s in g.get("states", [])]
-        self.nodes = []
+        self.inputs: dict[str, list[int]] = {i["name"]: dims(i["shape"], T) for i in g["inputs"]}
+        self.states: list[tuple[str, str]] = [(s["in"], s["out"]) for s in g.get("states", [])]
+        self.nodes: list[tuple[str, list[str], list[str], Attrs]] = []
         for n in g["nodes"]:
             a = dict(n.get("attrs", {}))
             for k in INT_ATTRS:
                 if k in a and isinstance(a[k], list):
                     a[k] = dims(a[k], T)
             self.nodes.append((n["op"], n["inputs"], n["outputs"], a))
-        self.state_vals = {}
+        self.state_vals: dict[str, Array] = {}
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self.state_vals = {si: np.zeros(self.inputs[si], F32) for si, _ in self.states}
 
-    def run(self, feeds, keep=False):
+    def run(self, feeds: dict[str, Array], keep: bool = False) -> dict[str, Array]:
         env = dict(self.consts)
         env.update(self.state_vals)
         env.update({k: np.asarray(v, F32).reshape(self.inputs[k]) for k, v in feeds.items()})
@@ -418,12 +449,14 @@ class Graph:
 # ------------------------------------------------------------------ pipeline DSP
 
 
-def window(spec, n, consts=None):
+def window(spec: str | Json | None, n: int, consts: dict[str, Array] | None = None) -> F64Array:
     if spec in (None, "none", "rect"):
         return np.ones(n, np.float64)
     if isinstance(spec, dict):
         if "values" in spec:
             return np.array(spec["values"], np.float64)
+        if consts is None:
+            raise ValueError(f"window {spec}: a tensor window needs the graph's constants")
         return consts[spec["tensor"]].astype(np.float64).reshape(-1)
     k = np.arange(n)
     if spec == "hann":
@@ -442,19 +475,30 @@ def window(spec, n, consts=None):
 
 
 class Package:
-    def __init__(self, path, T=None):
+    # set only for framed front-ends ("frames", "stft") / framed back-ends ("ola", "istft")
+    flen: int
+    nfft: int
+    wa: F64Array
+    hist: F64Array
+    blen: int
+    ws: F64Array
+    norm: F64Array
+    ola: F64Array
+
+    def __init__(self, path: str | Path, T: int | None = None) -> None:
         path = Path(path)
-        self.man = json.loads((path / "manifest.json").read_text())
+        self.man: Json = json.loads((path / "manifest.json").read_text())
         g = json.loads((path / self.man.get("graph", "graph.json")).read_text())
         w = np.fromfile(path / self.man.get("weights", "weights.bin"), "<f4") if (path / self.man.get("weights", "weights.bin")).exists() else np.zeros(0, F32)
-        p = self.man["pipeline"]
+        p: Json = self.man["pipeline"]
         self.p = p
         cfg = self.man.get("config", {})
-        self.T = T or cfg.get("frames_per_call") or p.get("frames_per_call", 1)
+        self.T: int = T or cfg.get("frames_per_call") or p.get("frames_per_call", 1)
         self.graph = Graph(g, w, self.T)
-        self.hop = p["hop"]
+        self.hop: int = p["hop"]
         self.fs = self.T * self.hop
-        self.front, self.back = p["front"], p.get("back", {"type": "waveform"})
+        self.front: Json = p["front"]
+        self.back: Json = p.get("back", {"type": "waveform"})
         c = self.graph.consts
         ft = self.front["type"]
         if ft in ("frames", "stft"):
@@ -480,19 +524,20 @@ class Package:
             self.dsp_latency = self.flen - self.hop
         if bt == "istft":
             self.dsp_latency += self.back.get("mask_delay", 0) * self.hop
-        self.latency = self.dsp_latency + p.get("graph_latency", 0)
+        self.latency: int = self.dsp_latency + p.get("graph_latency", 0)
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self.graph.reset()
         if hasattr(self, "flen"):
             self.hist = np.zeros(self.flen, np.float64)
         if hasattr(self, "blen"):
             self.ola = np.zeros(self.blen + self.hop, np.float64)
         md = self.back.get("mask_delay", 0)
-        self.specq = [None] * md
+        # the noisy spectra the masks apply to, mask_delay frames back; silence before the first (as the engine)
+        self.specq: list[F32Array] = [np.zeros((self.nfft // 2 + 1, 2), F32) for _ in range(md)]
 
-    def _front(self, x):
+    def _front(self, x: F64Array) -> tuple[F32Array, F32Array | None]:
         ft = self.front["type"]
         if ft == "time":
             return x.astype(F32), None
@@ -511,8 +556,6 @@ class Package:
         eps = self.front.get("log_eps", 1e-12)
         mag = np.abs(X)
         pw = mag ** 2
-        f = {"complex": None, "magnitude": mag, "power": pw, "log_power": None, "log10_power": None,
-             "log_magnitude": None, "log10_magnitude": None, "log1p_magnitude": None}
         if feat == "complex":
             return spec, spec
         base = mag if "magnitude" in feat else pw
@@ -527,9 +570,11 @@ class Package:
             v = np.log10(fl)
         elif feat == "log1p_magnitude":
             v = np.log1p(base)
+        else:
+            raise ValueError(f"front-end feature {feat!r}")
         return v.astype(F32), spec
 
-    def _back(self, y, spec):
+    def _back(self, y: Array, spec: F32Array | None) -> F64Array:
         bt = self.back["type"]
         if bt == "waveform":
             return y.reshape(-1)
@@ -546,6 +591,8 @@ class Package:
                     Z = y.reshape(T, F, 2)[t]
                     Zc = Z[:, 0].astype(np.float64) + 1j * Z[:, 1]
                 else:
+                    if spec is None:
+                        raise ValueError(f"back-end source {src!r} needs an stft front-end")
                     self.specq.append(spec[t])
                     s = self.specq.pop(0)
                     sc = s[:, 0].astype(np.float64) + 1j * s[:, 1]
@@ -561,12 +608,13 @@ class Package:
             self.ola = np.concatenate([self.ola[hop:], np.zeros(hop)])
         return out
 
-    def process(self, x):
+    def process(self, x: Array) -> F32Array:
         """Whole signal (any length; zero-padded to a multiple of frame_size). Output delayed by self.latency."""
         n0 = len(x)
         x = np.concatenate([np.asarray(x, np.float64), np.zeros((-n0) % self.fs)])
         out = np.zeros(len(x))
-        pin, pout = self.p.get("input"), self.p.get("output")
+        pin: str = self.p["input"]
+        pout: str = self.p["output"]
         for i in range(0, len(x), self.fs):
             feat, spec = self._front(x[i:i + self.fs])
             y = self.graph.run({pin: feat})[pout]
@@ -574,12 +622,13 @@ class Package:
         return out.astype(F32)
 
 
-def read_audio(p):
+def read_audio(p: str | Path) -> F32Array:
     if str(p).endswith(".f32"):
         return np.fromfile(p, "<f4")
     import soundfile as sf
     x, sr = sf.read(p, dtype="float32")
-    return x if x.ndim == 1 else x[:, 0]
+    mono: F32Array = x if x.ndim == 1 else x[:, 0]
+    return mono
 
 
 if __name__ == "__main__":

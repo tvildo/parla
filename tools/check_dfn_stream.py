@@ -28,7 +28,7 @@ g = Graph(json.loads((pkg / "graph.json").read_text()), np.fromfile(pkg / "weigh
 dm = dc = dl = 0.0
 for t in range(S):
     o = g.run({"feat_erb": erb[:, :, t:t + 1], "feat_spec": spec[:, :, t:t + 1]}, keep=True)
-    dm = max(dm, np.abs(o["m"].reshape(-1) - m_ref[0, 0, t].reshape(-1)).max())
-    dc = max(dc, np.abs(o["coefs"].reshape(-1) - c_ref[0, t].reshape(-1)).max())
+    dm = max(dm, float(np.abs(o["m"].reshape(-1) - m_ref[0, 0, t].reshape(-1)).max()))
+    dc = max(dc, float(np.abs(o["coefs"].reshape(-1) - c_ref[0, t].reshape(-1)).max()))
     dl = max(dl, abs(float(o["lsnr"].reshape(-1)[0]) - float(e["lsnr"][0, t, 0])))
 print(f"dfn stream vs whole-sequence ({S} frames): max|dm| {dm:.2e}  max|dcoefs| {dc:.2e} (scale {np.abs(c_ref).max():.2f})  max|dlsnr| {dl:.2e} dB")

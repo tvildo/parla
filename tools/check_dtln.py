@@ -15,7 +15,7 @@ from graph_ref import Package  # noqa: E402
 from onnx_pb import load  # noqa: E402
 
 
-def main():
+def main() -> None:
     src, pkg, wav = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
     nf = int(sys.argv[sys.argv.index("--frames") + 1]) if "--frames" in sys.argv else 300
     g1 = load(src / "pretrained_model_model_1.onnx")["graph"]

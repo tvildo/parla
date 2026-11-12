@@ -12,7 +12,10 @@ import re
 import sys
 from pathlib import Path
 
+from typing import Any
+
 import numpy as np
+import numpy.typing as npt
 
 LAYERS = [  # name, arrays, (nb_inputs, nb_neurons, activation)
     ("input_dense", ["input_dense_weights", "input_dense_bias"], (42, 24, "tanh")),
@@ -24,16 +27,18 @@ LAYERS = [  # name, arrays, (nb_inputs, nb_neurons, activation)
 ]
 
 
-def main():
+def main() -> None:
     src, out = Path(sys.argv[1]), Path(sys.argv[2])
     text = (src / "src_rnn_data.c").read_text()
     arrays = {m.group(1): np.array([int(v) for v in m.group(3).replace("\n", " ").split(",") if v.strip()], np.float32)
               for m in re.finditer(r"static const rnn_weight (\w+)\[(\d+)\] = \{([^}]*)\}", text)}
-    data, layout, off = [], [], 0
+    data: list[npt.NDArray[np.float32]] = []
+    layout: list[dict[str, Any]] = []
+    off = 0
     for name, arrs, (ni, nn, act) in LAYERS:
         g = 3 if "gru" in name else 1
         exp = {"weights": ni * nn * g, "recurrent_weights": nn * nn * g, "bias": nn * g}
-        ent = {"name": name, "inputs": ni, "neurons": nn, "activation": act, "tensors": {}}
+        ent: dict[str, Any] = {"name": name, "inputs": ni, "neurons": nn, "activation": act, "tensors": {}}
         for a in arrs:
             kind = a[len(name) + 1:]
             v = arrays[a]
@@ -45,7 +50,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     np.concatenate(data).astype("<f4").tofile(out / "weights.bin")
     up = {f: hashlib.sha256((src / f).read_bytes()).hexdigest() for f in ("src_rnn_data.c", "src_denoise.c", "src_pitch.c")}
-    man = {
+    man: dict[str, Any] = {
         "name": "rnnoise", "display_name": "RNNoise v0.1.1 (48 kHz, Bark-band GRU + pitch filter)", "engine": "rnnoise",
         "weights": "weights.bin", "sample_rate": 48000, "frame_size": 480, "latency": 480, "local_only": False,
         "license": "BSD-3-Clause (Copyright (c) 2017 Mozilla, 2018 Gregor Richards; COPYING)",
