@@ -34,3 +34,7 @@ models/rnnoise
 
 Each package's manifest.json records its licence, exact source, version and the sha256 of every
 upstream file used.
+
+Website icons (src/site/src/components/icons.ts)
+  Browser, Node.js and npm icons from Simple Icons 16.37.0 (https://simpleicons.org), CC0-1.0. The marks belong to
+  their owners; the install page uses them only to show which browser or tool each button is for.
