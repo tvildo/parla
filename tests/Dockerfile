@@ -2,7 +2,7 @@
 # (release build, geckodriver, Selenium) with PulseAudio on a null sink for the Firefox extension check.
 # Built and run by `python build.py test` (the oss/ tree is mounted at /oss; build artifacts come from the host).
 # pinned by digest (the tag can move); the version matches @playwright/test in package-lock.json
-FROM mcr.microsoft.com/playwright:v1.64.1-noble@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f
+FROM mcr.microsoft.com/playwright:v1.65.1-noble@sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579
 RUN apt-get update && apt-get install -y --no-install-recommends python3 pulseaudio xz-utils curl ca-certificates \
  && rm -rf /var/lib/apt/lists/* && ln -sf /usr/bin/python3 /usr/local/bin/python
 # Firefox release + geckodriver, pinned by checksum (Mozilla's SHA256SUMS; the geckodriver release asset)
